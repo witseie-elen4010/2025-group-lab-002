@@ -3,4 +3,5 @@
 ## Contributers:
 - Aaliyah Noorbhai
 - Rizwaanah Seedat 
+- Glen McKenzie
 
