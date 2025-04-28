@@ -1,8 +1,11 @@
 const express = require('express')
 const app = express()
+const router = require('./routes/user-routes.js')
 
 // Middleware
 app.use(express.json()) // To parse JSON request bodies
+
+app.use('/api/users', router)
 
 // 404 Handler
 app.use((req, res, next) => {
