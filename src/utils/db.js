@@ -1,4 +1,34 @@
 const sequelize = require('../config/database');
+const { DataTypes } = require('sequelize');
+
+// Define User model
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: true,
+  tableName: 'users'
+});
 
 async function testConnection() {
   try {
@@ -9,7 +39,41 @@ async function testConnection() {
   }
 }
 
+// Function to find a user by ID
+async function findUserById(userId) {
+  try {
+    return await User.findByPk(userId);
+  } catch (error) {
+    console.error('Error finding user by ID:', error);
+    throw error;
+  }
+}
+
+// Function to find a user by username
+async function findUserByUsername(username) {
+  try {
+    return await User.findOne({ where: { username } });
+  } catch (error) {
+    console.error('Error finding user by username:', error);
+    throw error;
+  }
+}
+
+// Function to find a user by email
+async function findUserByEmail(email) {
+  try {
+    return await User.findOne({ where: { email } });
+  } catch (error) {
+    console.error('Error finding user by email:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   sequelize,
-  testConnection
+  testConnection,
+  User,
+  findUserById,
+  findUserByUsername,
+  findUserByEmail
 }; 
