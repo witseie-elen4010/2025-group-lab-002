@@ -26,15 +26,18 @@ const User = sequelize.define('User', {
     allowNull: false
   }
 }, {
-  timestamps: true,
+  timestamps: false,
   tableName: 'users'
 });
 
 async function testConnection() {
+  console.time('Database Authentication');
   try {
     await sequelize.authenticate();
+    console.timeEnd('Database Authentication');
     console.log('Database connection has been established successfully.');
   } catch (error) {
+    console.timeEnd('Database Authentication');
     console.error('Unable to connect to the database:', error);
   }
 }

@@ -41,6 +41,7 @@ async function backupDatabase() {
  * @returns {Promise<void>}
  */
 async function restoreDatabase() {
+   console.time('restoreDatabase');
   try {
     // Check if backup file exists
     try {
@@ -69,6 +70,7 @@ async function restoreDatabase() {
     console.error('Failed to restore database:', error);
     throw error;
   }
+   console.timeEnd('restoreDatabase');
 }
 
 /**
@@ -76,6 +78,7 @@ async function restoreDatabase() {
  * @returns {Promise<void>}
  */
 async function checkAndRestoreDatabase() {
+  console.time('checkAndRestoreDatabase');
   try {
     // Test database connection
     await sequelize.authenticate();
@@ -84,6 +87,7 @@ async function checkAndRestoreDatabase() {
     console.log('Database connection failed, attempting to restore from backup...');
     await restoreDatabase();
   }
+  console.timeEnd('checkAndRestoreDatabase');
 }
 
 module.exports = {
