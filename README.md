@@ -42,6 +42,17 @@
    psql suspect404
    ```
 
+
+6. **Create a `.env` File**  
+   Create a `.env` file in the root directory of the project to store your database credentials. Add the following content to the file:
+   ```
+   DB_USER=youruser
+   DB_PASSWORD=yourpassword
+   DB_NAME=suspect404
+   DB_HOST=localhost
+   DB_PORT=5432
+   ```
+
 **Note:**  
 - Ensure your PostgreSQL user has sufficient privileges.
 - You may need to specify a username with `-U your_username` and host with `-h your_host` if different from defaults.
