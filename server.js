@@ -5,8 +5,12 @@ const { checkAndRestoreDatabase } = require('./src/utils/db-backup')
 
 const PORT = process.env.PORT || 3000
 
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
+
 // Check database connection and restore if necessary
-checkAndRestoreDatabase()
+/*checkAndRestoreDatabase()
   .then(() => {
     // Test database connection
     testConnection()
@@ -18,4 +22,4 @@ checkAndRestoreDatabase()
   .catch(error => {
     console.error('Failed to initialize database:', error)
     process.exit(1)
-  })
+  })*/
