@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Game</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="container text-center p-4 bg-white shadow rounded">
+    <h1 class="text-dark mb-3">Create Game Room</h1>
+    <p class="text-secondary">Hello, <span id="username">User</span>! Click a button below to create or join a game.</p>
+    
+    <button id="create-room-button" class="btn btn-primary mt-2">Create Room</button>
+
+    <div id="room-code-container" class="mt-4 d-none">
+        <p class="text-success fw-bold">Room Code:</p>
+        <h3 id="room-code" class="text-dark"></h3>
+        <p class="text-muted">Share this code with friends to join.</p>
+      </div>
+
+    <button id="join-game-button" class="btn btn-secondary mt-4">Join Game</button>
+
+    <div id="join-game-container" class="mt-3 d-none">
+      <input type="text" id="join-code" class="form-control mb-2" placeholder="Enter Room Code">
+      <button id="submit-join" class="btn btn-success">Join Room</button>
+    </div>
+
+    <button id="logout-button" class="btn btn-danger mt-4">Log Out</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/create-game.js"></script>
+</body>
+</html>

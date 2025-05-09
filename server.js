@@ -21,9 +21,21 @@ checkAndRestoreDatabase()
     setupGameSocket(io);  // Assuming setupGameSocket sets up the necessary game event listeners
 
     io.on('connection', (socket) => {
-      console.log('Client connected:', socket.id);
-
-      // Here you can add more socket event listeners if needed
+      socket.on('room-created', ({ code, username }) => {
+        socket.join(code);
+        console.log(`Room ${code} created by ${username}`);
+      });
+    
+      socket.on('join-room', ({ code, username }) => {
+        socket.join(code);
+        console.log(`${username} joined room ${code}`);
+        // You can emit to the room:
+        socket.to(code).emit('user-joined', { username });
+      });
+    
+      socket.on('disconnect', () => {
+        console.log('Client disconnected');
+      });
     });
 
     // Start the server and listen on the specified port

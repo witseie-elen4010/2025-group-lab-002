@@ -6,7 +6,7 @@ const generateCode = require('../utils/create-game-code');
 const rooms = {}; // In-memory store for now
 
 router.get('/join', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/join-game.html'));
+    res.sendFile(path.join(__dirname, '../public/create-game.html'));
   });
 
 router.post('/create-room', (req, res) => {
