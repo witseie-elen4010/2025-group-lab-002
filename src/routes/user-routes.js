@@ -131,4 +131,4 @@ router.post('/signup-login', (req, res) => {
   res.json({ message: 'Signup and login handled together' })
 })
 
-module.exports = router
+module.exports = { router }

@@ -1,0 +1,32 @@
+<!-- join-game.html -->
+<input type="text" id="code" placeholder="Enter room code">
+<input type="text" id="username" placeholder="Enter your name">
+<button onclick="joinRoom()">Join</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  async function joinRoom() {
+    const code = document.getElementById('code').value.toUpperCase();
+    const username = document.getElementById('username').value;
+
+    const res = await fetch('/api/game/join-room', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, username })
+    });
+
+    if (res.ok) {
+      socket.emit('join-room', { code, username });
+    }
+  }
+
+  socket.on('player-joined', ({ username }) => {
+    alert(`${username} joined!`);
+  });
+
+  socket.on('game-started', () => {
+    window.location.href = 'game.html';
+  });
+</script>
