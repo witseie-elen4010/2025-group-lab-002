@@ -48,6 +48,10 @@ const Vote = sequelize.define('Vote', {
   round_number: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  game_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
 }, {
   timestamps: false,

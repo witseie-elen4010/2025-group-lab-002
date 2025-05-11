@@ -1,4 +1,4 @@
-const { Player, VotingRound } = require('../voting-round');
+const { Player, VotingRound } = require('../src/public/voting-round');
 
 describe('VotingRound', () => {
     let players;

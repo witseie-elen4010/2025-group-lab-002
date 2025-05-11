@@ -54,12 +54,13 @@
             // For demo, use index+1 as ID (replace with real IDs if available)
             const player_id = currentVoterIndex + 1;
             const voted_for_id = players.findIndex(p => p.username === voteFor) + 1;
-            const round_number = 1; // Replace with actual round logic if needed
+            const round_number = 1; 
+            const game_id = 1; 
 
             await fetch('/api/votes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ player_id, voted_for_id, round_number })
+                body: JSON.stringify({ player_id, voted_for_id, round_number, game_id})
             });
             // --- End send vote ---
 
