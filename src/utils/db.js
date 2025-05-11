@@ -30,6 +30,26 @@ const User = sequelize.define('User', {
   tableName: 'users'
 });
 
+// Define WordPair model
+const WordPair = sequelize.define('WordPair', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  civilian_word: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  undercover_word: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  tableName: 'word_pairs'
+});
+
 async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -75,5 +95,6 @@ module.exports = {
   User,
   findUserById,
   findUserByUsername,
-  findUserByEmail
+  findUserByEmail,
+  WordPair
 }; 

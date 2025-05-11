@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Word Pair</title>
+</head>
+<body>
+  <h1>Word Pair</h1>
+  <p><strong>Civilian:</strong> <span id="civilian-word"></span></p>
+  <p><strong>Undercover:</strong> <span id="undercover-word"></span></p>
+
+  <script>
+    fetch('/random-word-pair-json')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('civilian-word').textContent = data.civilian_word;
+        document.getElementById('undercover-word').textContent = data.undercover_word;
+      })
+      .catch(err => console.error('Error fetching word pair:', err));
+  </script>
+</body>
+</html>
