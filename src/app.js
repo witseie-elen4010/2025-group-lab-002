@@ -1,7 +1,8 @@
 const path = require('path');
+
 const express = require('express');
 const app = express();
-
+const wordPairRouter = require('./routes/word-pairs.js')
 const { router } = require('./routes/user-routes.js');
 const { router: gameRouter } = require('./routes/game-routes.js');
 const setupGameSocket = require('./sockets/game-socket.js');
@@ -16,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api/users', router);
 app.use('/api/game', gameRouter);
+app.use('/api/wordPair', wordPairRouter);
 
 // 404 Handler for any undefined routes
 app.use((req, res, next) => {
