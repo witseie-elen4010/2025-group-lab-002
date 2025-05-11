@@ -50,6 +50,34 @@ const WordPair = sequelize.define('WordPair', {
   tableName: 'word_pairs'
 });
 
+// Define Vote model
+const Vote = sequelize.define('Vote', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  player_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  voted_for_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  round_number: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  game_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  tableName: 'votes'
+});
+
 async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -96,5 +124,6 @@ module.exports = {
   findUserById,
   findUserByUsername,
   findUserByEmail,
-  WordPair
-}; 
+  WordPair,
+  Vote // Export Vote model
+};
