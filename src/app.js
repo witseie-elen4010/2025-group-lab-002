@@ -5,6 +5,7 @@ const app = express();
 const { router } = require('./routes/user-routes.js');
 const { router: gameRouter } = require('./routes/game-routes.js');
 const setupGameSocket = require('./sockets/game-socket.js');
+const voteRouter = require('./routes/vote-routes.js')
 
 // Middleware for JSON and URL-encoded body parsing
 app.use(express.json());
@@ -16,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API routes
 app.use('/api/users', router);
 app.use('/api/game', gameRouter);
+app.use('/api/votes', voteRouter)
 
 // 404 Handler for any undefined routes
 app.use((req, res, next) => {

@@ -212,6 +212,40 @@ COPY public.word_pairs (id, civilian_word, undercover_word) FROM stdin;
 \.
 
 --
+-- Name: votes; Type: TABLE; Schema: public; Owner: noahdisler
+--
+
+CREATE TABLE public.votes (
+    id serial PRIMARY KEY,
+    player_id integer NOT NULL,
+    voted_for_id integer NOT NULL,
+    round_number integer NOT NULL,
+    game_id integer NOT NULL
+);
+
+ALTER TABLE public.votes OWNER TO noahdisler;
+
+--
+-- Data for Name: votes; Type: TABLE DATA; Schema: public; Owner: noahdisler
+--
+
+COPY public.votes (id, player_id, voted_for_id, round_number, game_id) FROM stdin;
+\.
+
+--
+-- Name: votes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: noahdisler
+--
+
+SELECT pg_catalog.setval('public.votes_id_seq', 1, false);
+
+--
+-- Name: votes votes_pkey; Type: CONSTRAINT; Schema: public; Owner: noahdisler
+--
+
+ALTER TABLE ONLY public.votes
+    ADD CONSTRAINT votes_pkey PRIMARY KEY (id);
+
+--
 -- PostgreSQL database dump complete
 --
 
