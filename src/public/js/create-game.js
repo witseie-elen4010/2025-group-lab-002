@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const createRoomButton = document.getElementById('create-room-button');
   const roomCodeContainer = document.getElementById('room-code-container');
   const roomCodeElement = document.getElementById('room-code');
+  const wordPairContainer = document.getElementById('word-pair-container');
+  const civilianWordElement = document.getElementById('civilian-word');
+  const undercoverWordElement = document.getElementById('undercover-word');
 
   const joinGameButton = document.getElementById('join-game-button');
   const joinGameContainer = document.getElementById('join-game-container');
@@ -27,6 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         roomCodeElement.textContent = data.code;
         roomCodeContainer.classList.remove('d-none');
+
+        civilianWordElement.textContent = data.wordPair.civilian_word;
+        undercoverWordElement.textContent = data.wordPair.undercover_word;
+        wordPairContainer.classList.remove('d-none');
 
         socket = io();
         socket.on('connect', () => {

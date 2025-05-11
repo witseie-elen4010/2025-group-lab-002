@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path')
 const router = express.Router();
 const generateCode = require('../utils/create-game-code');
+const getRandomWordPair = require('../utils/get-word-pair');
 
 const rooms = {}; // In-memory store for now
 
@@ -9,13 +10,15 @@ router.get('/join', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/create-game.html'));
   });
 
-router.post('/create-room', (req, res) => {
+router.post('/create-room', async (req, res) => {
   const code = generateCode();
+  const wordPair = await getRandomWordPair();
   rooms[code] = {
     players: [],
-    createdAt: new Date()
+    createdAt: new Date(),
+    wordPair: wordPair
   };
-  res.status(201).json({ code });
+  res.status(201).json({ code, wordPair });
 });
 
 router.post('/join-room', (req, res) => {
