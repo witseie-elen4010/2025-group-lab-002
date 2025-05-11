@@ -209,7 +209,7 @@ COPY public.word_pairs (id, civilian_word, undercover_word) FROM stdin;
 3	car	truck
 4	doctor	nurse
 5	ocean	lake
-/.
+\.
 
 --
 -- PostgreSQL database dump complete
