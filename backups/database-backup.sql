@@ -187,6 +187,29 @@ ALTER TABLE ONLY public.users
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
 
+--
+-- Name: word_pairs; Type: TABLE; Schema: public; Owner: noahdisler
+--
+
+CREATE TABLE public.word_pairs (
+    id serial PRIMARY KEY,
+    civilian_word VARCHAR(100) NOT NULL,
+    undercover_word VARCHAR(100) NOT NULL
+);
+
+ALTER TABLE public.word_pairs OWNER TO noahdisler;
+
+--
+-- Data for Name: word_pairs; Type: TABLE DATA; Schema: public; Owner: noahdisler
+--
+
+COPY public.word_pairs (id, civilian_word, undercover_word) FROM stdin;
+1	apple	pear
+2	cat	tiger
+3	car	truck
+4	doctor	nurse
+5	ocean	lake
+\.
 
 --
 -- PostgreSQL database dump complete
