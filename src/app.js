@@ -1,25 +1,33 @@
 const path = require('path');
-const express = require('express')
-const app = express()
-const router = require('./routes/user-routes.js')
+
+const express = require('express');
+const app = express();
 const wordPairRouter = require('./routes/word-pairs.js')
+const { router } = require('./routes/user-routes.js');
+const { router: gameRouter } = require('./routes/game-routes.js');
+const setupGameSocket = require('./sockets/game-socket.js');
 
-// Middleware
-app.use(express.json()) // To parse JSON request bodies
+// Middleware for JSON and URL-encoded body parsing
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/api/users', router)
-app.use('/', wordPairRouter);
 
-// 404 Handler
+// Serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API routes
+app.use('/api/users', router);
+app.use('/api/game', gameRouter);
+app.use('/api/wordPair', wordPairRouter);
+
+// 404 Handler for any undefined routes
 app.use((req, res, next) => {
-  res.status(404).json({ message: 'Route not found' })
-})
+  res.status(404).json({ message: 'Route not found' });
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({ message: 'Something broke!' })
-})
+  console.error('Error:', err.stack);
+  res.status(500).json({ message: 'Something broke!' });
+});
 
-module.exports = app
+module.exports = app;

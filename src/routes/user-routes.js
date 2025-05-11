@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { User, sequelize, findUserById, findUserByUsername, findUserByEmail } = require('../utils/db')
+const path = require('path');
 
 // Get all users route
 router.get('/', async (req, res) => {
@@ -90,6 +91,18 @@ router.post('/login', async (req, res) => {
   }
 })
 
+router.get('/sign-up', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/sign-up.html'))
+})
+
+router.get('/landing', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/landing-page.html'))
+})
+
+router.get('/login', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'))
+})
+
 // Get user by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -118,4 +131,4 @@ router.post('/signup-login', (req, res) => {
   res.json({ message: 'Signup and login handled together' })
 })
 
-module.exports = router
+module.exports = { router }
