@@ -30,6 +30,26 @@ const User = sequelize.define('User', {
   tableName: 'users'
 });
 
+// Define WordPair model
+const WordPair = sequelize.define('WordPair', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  civilian_word: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  undercover_word: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  tableName: 'word_pairs'
+});
+
 // Define Vote model
 const Vote = sequelize.define('Vote', {
   id: {
@@ -104,5 +124,6 @@ module.exports = {
   findUserById,
   findUserByUsername,
   findUserByEmail,
+  WordPair,
   Vote // Export Vote model
 };
