@@ -40,12 +40,29 @@
         updateVoteCounts(votingRound.votes);
     }
 
-    voteForm.addEventListener("submit", event => {
+    voteForm.addEventListener("submit", async event => {
         event.preventDefault();
         const voteFor = voteForSelect.value;
 
         try {
             votingRound.castVote(players[currentVoterIndex].username, voteFor);
+
+            // --- Send vote to backend ---
+            // Find player IDs (simulate or map as needed)
+            const voter = players[currentVoterIndex];
+            const votedFor = players.find(p => p.username === voteFor);
+            // For demo, use index+1 as ID (replace with real IDs if available)
+            const player_id = currentVoterIndex + 1;
+            const voted_for_id = players.findIndex(p => p.username === voteFor) + 1;
+            const round_number = 1; // Replace with actual round logic if needed
+
+            await fetch('/api/votes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player_id, voted_for_id, round_number })
+            });
+            // --- End send vote ---
+
             currentVoterIndex++;
 
             if (currentVoterIndex < players.length) {

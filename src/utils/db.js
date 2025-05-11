@@ -30,6 +30,30 @@ const User = sequelize.define('User', {
   tableName: 'users'
 });
 
+// Define Vote model
+const Vote = sequelize.define('Vote', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  player_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  voted_for_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  round_number: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  tableName: 'votes'
+});
+
 async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -75,5 +99,6 @@ module.exports = {
   User,
   findUserById,
   findUserByUsername,
-  findUserByEmail
-}; 
+  findUserByEmail,
+  Vote // Export Vote model
+};
