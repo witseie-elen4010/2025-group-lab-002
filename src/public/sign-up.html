@@ -13,7 +13,7 @@
 </head>
 <script src="script.js"></script>
 
-<body class="d-flex justify-content-center align-items-center vh-100 bg-white">
+<body class="d-flex flex-column justify-content-center align-items-centerjustify-content-center align-items-center vh-100 bg-white">
   <h1>Suspect404</h1>
   <form id="signup-form" class="text-black p-4 rounded shadow" style="max-width: 90%; background-color: #91bbd1;">
 
@@ -32,6 +32,15 @@
     <div class="mb-3">
       <label for="password" class="form-label">Password:</label>
       <input type="password" id="password" name="password" class="form-control" required />
+      <div class="form-text text-dark">
+        Password must be at least 8 characters and contain at least one special character and one number.
+      </div>
+    </div>
+
+    <!-- confirm password input field -->
+    <div class="mb-3">
+      <label for="confirm-password" class="form-label">Confirm Password:</label>
+      <input type="password" id="confirm-password" name="confirm-password" class="form-control" required />
     </div>
 
     <div id="signup-error" class="text-danger mb-3" style="display: none;"></div>
@@ -55,6 +64,27 @@
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Password validation
+    const minLength = 8;
+    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    const numberRegex = /[0-9]/;
+    if (password !== confirmPassword) {
+      signupError.style.display = 'block';
+      signupError.textContent = 'Passwords do not match.';
+      return;
+    }
+    if (password.length < minLength) {
+      signupError.style.display = 'block';
+      signupError.textContent = `Password must be at least ${minLength} characters.`;
+      return;
+    }
+    if (!specialCharRegex.test(password) || !numberRegex.test(password)) {
+      signupError.style.display = 'block';
+      signupError.textContent = 'Password must contain at least one special character and one number.';
+      return;
+    }
 
     try {
       const response = await fetch('/api/users/signup', {
