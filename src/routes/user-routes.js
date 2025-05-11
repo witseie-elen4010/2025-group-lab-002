@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { User, sequelize, findUserById, findUserByUsername, findUserByEmail } = require('../utils/db')
 const path = require('path');
+const bcrypt = require('bcrypt')
 
 // Get all users route
 router.get('/', async (req, res) => {
@@ -39,11 +40,14 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' })
     }
     
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     // Create new user
     const newUser = await User.create({
       username,
       email,
-      password // Note: In a real app, you should hash this password
+      password: hashedPassword
     })
     
     res.status(201).json({ 
@@ -72,8 +76,9 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
     
-    // Check password (in a real app, you would compare hashed passwords)
-    if (user.password !== password) {
+    // Compare hashed password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
     console.log('Login Successful', user)
