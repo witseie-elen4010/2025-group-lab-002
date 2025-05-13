@@ -116,12 +116,3 @@ CREATE TABLE public.votes (
 --
 SELECT pg_catalog.setval('public.votes_id_seq', 1, false);
 
---
--- Name: votes votes_pkey; Type: CONSTRAINT; Schema: public
---
-ALTER TABLE ONLY public.votes
-    ADD CONSTRAINT votes_pkey PRIMARY KEY (id);
-
---
--- PostgreSQL database dump complete
---
