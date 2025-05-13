@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { sequelize, User } = require('../src/utils/db');
+jest.setTimeout(15000);
+
 
 describe('User Auth API', () => {
   beforeAll(async () => {

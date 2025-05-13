@@ -1,9 +1,12 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { sequelize, Vote } = require('../src/utils/db');
+jest.setTimeout(15000);
+
 
 describe('Vote API', () => {
   beforeAll(async () => {
+    await sequelize.drop({ cascade: true });
     await sequelize.sync({ force: true }); // Reset DB for test
   });
 

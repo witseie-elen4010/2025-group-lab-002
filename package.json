@@ -13,13 +13,12 @@
     "supertest": "^7.1.0"
   },
   "scripts": {
+    "start" : "node server.js",
     "test": "jest",
     "supertest": "^7.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
-  },
-  "devDependencies": {
+    "jest": "^29.7.0",
     "supertest": "^7.1.0"
   }
 }
