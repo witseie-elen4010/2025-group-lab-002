@@ -3,11 +3,19 @@ const app = require('../src/app');
 const { sequelize, Vote } = require('../src/utils/db');
 jest.setTimeout(15000);
 
-
 describe('Vote API', () => {
   beforeAll(async () => {
-    await sequelize.drop({ cascade: true });
-    await sequelize.sync({ force: true }); // Reset DB for test
+    // First drop all tables with cascade
+    await sequelize.drop({ cascade: true }).catch(err => {
+      console.log('Drop error:', err);
+      // Continue even if drop fails - sync will recreate tables
+    });
+    
+    // Then recreate all tables
+    await sequelize.sync({force:true}).catch(err => {
+      console.log('Sync error:', err);
+      throw err; // If sync fails, we should stop the tests
+    });
   });
 
   afterAll(async () => {
