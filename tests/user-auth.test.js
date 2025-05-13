@@ -6,6 +6,7 @@ jest.setTimeout(15000);
 
 describe('User Auth API', () => {
   beforeAll(async () => {
+    await sequelize.drop({ cascade: true });
     await sequelize.sync({ force: true }); // Reset DB for test
   });
 
