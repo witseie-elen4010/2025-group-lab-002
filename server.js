@@ -5,7 +5,7 @@ const app = require('./src/app');
 const { testConnection } = require('./src/utils/db');
 const { checkAndRestoreDatabase } = require('./src/utils/db-backup');
 const setupGameSocket = require('./src/sockets/game-socket'); // Assuming this is for game logic
-
+const { router, rooms } = require('./src/routes/game-routes');
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -18,25 +18,7 @@ checkAndRestoreDatabase()
     testConnection();
 
     // Initialize Socket.IO once the database is ready
-    setupGameSocket(io);  // Assuming setupGameSocket sets up the necessary game event listeners
-
-    io.on('connection', (socket) => {
-      socket.on('room-created', ({ code, username }) => {
-        socket.join(code);
-        console.log(`Room ${code} created by ${username}`);
-      });
-    
-      socket.on('join-room', ({ code, username }) => {
-        socket.join(code);
-        console.log(`${username} joined room ${code}`);
-        // You can emit to the room:
-        socket.to(code).emit('user-joined', { username });
-      });
-    
-      socket.on('disconnect', () => {
-        console.log('Client disconnected');
-      });
-    });
+    setupGameSocket(io, rooms);  // Assuming setupGameSocket sets up the necessary game event listeners
 
     // Start the server and listen on the specified port
     server.listen(PORT, () => {
