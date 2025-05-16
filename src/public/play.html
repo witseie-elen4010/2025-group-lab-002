@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Room</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .player-box {
+            border: 2px solid #5959ba;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px;
+            text-align: center;
+            background-color: #f0f0ff;
+            min-width: 120px;
+            display: inline-block;
+        }
+        
+        .speech-bubble {
+            position: relative;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -10px;
+            border-width: 0 10px 10px;
+            border-style: solid;
+            border-color: #ffffff transparent;
+        }
+        
+        .players-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 15px;
+        }
+        
+        .player {
+            text-align: center;
+            flex: 0 0 auto;
+            min-width: 120px;
+            max-width: 200px;
+            margin: 0 15px;
+        }
+        
+        .player-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .current-player {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(89, 89, 186, 0.7);
+            border-radius: 10px;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .header-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            margin: 0;
+        }
+        
+        .has-clue {
+            background-color: #fffef0;
+            border: 1px solid skyblue;
+        }
+        
+        .turn-indicator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #5959ba;
+            margin: 15px 0;
+            text-align: center;
+            position: fixed;
+            top: 100px;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .word-box {
+            border: 3px solid #5959ba;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px auto;
+            text-align: center;
+            background-color: #f0f0ff;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .word-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column justify-content-center align-items-center vh-100 bg-white">
+    <div class="header-title">
+        <h1>Suspect404</h1>
+        <h2>Game Room: <span id="room-code"></span></h2>
+    </div>
+    <div id="turn-indicator" class="turn-indicator">Waiting for turn...</div>
+    <div class="text-black p-4 rounded shadow" style="width: 100%; max-width: 100%; background-color: #a6a6d7;">
+        
+        <div class="mb-3 players-container" id="players-container">
+            <!-- Players will be dynamically added by JavaScript -->
+        </div>
+
+        <div class="mb-3 word-box">
+            <div class="word-text" id="player-word">Loading...</div>
+        </div>
+
+        <div class="mb-3" id="clue-input-container">
+            <label for="clue-input" class="form-label">Your Clue:</label>
+            <input type="text" class="form-control" id="clue-input" placeholder="Enter your clue here..." />
+            <button class="btn w-100 text-black mt-2" style="background-color: #5959ba" id="submit-clue-btn">Submit Clue</button>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+            <button class="btn text-black" style="background-color: #5959ba" id="open-chat-btn">Open Chat</button>
+            <button class="btn text-black" style="background-color: #5959ba" id="show-clue-history-btn">Show Clue History</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/play.js"></script>
+</body>
+
+</html>
