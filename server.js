@@ -6,6 +6,8 @@ const { testConnection } = require('./src/utils/db');
 const { checkAndRestoreDatabase } = require('./src/utils/db-backup');
 const setupGameSocket = require('./src/sockets/game-socket'); // Assuming this is for game logic
 
+const { router: gameRouter, rooms } = require('./src/routes/game-routes');
+
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -18,7 +20,7 @@ checkAndRestoreDatabase()
     testConnection();
 
     // Initialize Socket.IO once the database is ready
-    setupGameSocket(io);  // Assuming setupGameSocket sets up the necessary game event listeners
+    setupGameSocket(io, rooms);  // Assuming setupGameSocket sets up the necessary game event listeners
 
     io.on('connection', (socket) => {
       socket.on('room-created', ({ code, username }) => {

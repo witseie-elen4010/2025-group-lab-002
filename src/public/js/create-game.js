@@ -1,7 +1,7 @@
 let socket;
 
 document.addEventListener('DOMContentLoaded', () => {
-  const user = JSON.parse(localStorage.getItem('loggedInUser')) || { username: 'Guest' };
+  const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Guest' };
   document.getElementById('username').textContent = user.username;
 
   const createRoomButton = document.getElementById('create-room-button');
@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const joinCodeInput = document.getElementById('join-code');
   const submitJoinButton = document.getElementById('submit-join');
 
+  document.getElementById('go-to-voting').addEventListener('click', () => {
+    window.location.href = 'voting-round';
+  });
+  
   const logoutButton = document.getElementById('logout-button');
 
   // Handle room creation (HTTP + socket)
@@ -28,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (res.ok) {
+        sessionStorage.setItem('roomCode', data.code);
         roomCodeElement.textContent = data.code;
         roomCodeContainer.classList.remove('d-none');
 
@@ -41,9 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
           socket.emit('room-created', { username: user.username, roomCode: data.code });
         });
 
-        socket.on('user-joined', ({ username }) => {
-          console.log(`${username} joined your room.`);
-        });
+        // socket.on('user-joined', ({ username }) => {
+        //   console.log(`${username} joined your room.`);
+        // });
       } else {
         alert('Failed to create room.');
       }
@@ -71,12 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (res.ok) {
+        sessionStorage.setItem('roomCode', code);
+        document.getElementById('go-to-voting').classList.remove('d-none');
         alert(`Successfully joined room: ${code}`);
 
         socket = io();
         socket.on('connect', () => {
           console.log('Connected to socket server with ID:', socket.id);
-          socket.emit('join-room', { username: user.username, roomCode: code });
+          socket.emit('join-room', { username: user.username, code });
         });
 
         socket.on('user-joined', ({ username }) => {
@@ -92,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Logout
   logoutButton.addEventListener('click', () => {
-    localStorage.removeItem('loggedInUser');
+    sessionStorage.removeItem('loggedInUser');
     window.location.href = 'login';
   });
 });

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
   
         if (response.ok) {
-          localStorage.setItem('loggedInUser', JSON.stringify(data.user));
+          sessionStorage.setItem('loggedInUser', JSON.stringify(data.user));
           alert('Login successful! Redirecting to landing page...');
           window.location.href = 'landing';
         } else {

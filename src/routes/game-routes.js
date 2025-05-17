@@ -31,4 +31,16 @@ router.post('/join-room', (req, res) => {
   res.status(200).json({ message: 'Joined room', players: rooms[code].players });
 });
 
+router.get('/players', (req, res) => {
+  const code = req.query.code;
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+  res.status(200).json(rooms[code].players);
+});
+
+router.get('/voting-round', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/voting-round.html'));
+});
+
 module.exports = { router, rooms };
