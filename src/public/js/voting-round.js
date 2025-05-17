@@ -64,6 +64,11 @@ class VotingRound {
       }
     }
 
+    const totalVotesCast = Object.values(this.votes).reduce((a, b) => a + b, 0);
+    if (totalVotesCast === 0) {
+      return null;
+    }
+
     const tiedPlayers = Object.entries(this.votes).filter(
       ([, voteCount]) => voteCount === maxVotes
     );
@@ -76,72 +81,42 @@ class VotingRound {
   }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const user = JSON.parse(sessionStorage.getItem("loggedInUser"));
-  if (!user) {
-    alert("You must be logged in!");
-    window.location.href = "login";
-    return;
-  }
-
-  const roomCode = sessionStorage.getItem("roomCode");
-  if (!roomCode) {
-    alert("No room code found!");
-    window.location.href = "create-game";
-    return;
-  }
-
-  const voterLabel = document.getElementById("current-voter");
-  const voteForSelect = document.getElementById("vote-for");
-  const resultsDiv = document.getElementById("results");
-  const voteForm = document.getElementById("vote-form");
-  const voteCountsDiv = document.getElementById("vote-counts");
-
-  const socket = io();
-
-  socket.emit("join-room", { code: roomCode, username: user.username });
-
-  let players = [];
-  try {
-    const res = await fetch(`/api/game/players?code=${roomCode}`);
-    players = await res.json();
-  } catch (err) {
-    alert("Failed to load players.");
-    return;
-  }
-
-  voterLabel.textContent = user.username;
-  voteForSelect.innerHTML = "";
-  players.forEach((player) => {
-    if (player.username !== user.username) {
-      const option = document.createElement("option");
-      option.value = player.username;
-      option.textContent = player.username;
-      voteForSelect.appendChild(option);
+if (typeof window !== "undefined" && typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", async () => {
+    const user = JSON.parse(sessionStorage.getItem("loggedInUser"));
+    if (!user) {
+      alert("You must be logged in!");
+      window.location.href = "login";
+      return;
     }
-  });
 
-  socket.on("vote-update", (votes) => {
-    voteCountsDiv.innerHTML = "";
-    for (const [username, voteCount] of Object.entries(votes)) {
-      const voteItem = document.createElement("p");
-      voteItem.textContent = `${username}: ${voteCount} votes`;
-      voteCountsDiv.appendChild(voteItem);
+    const roomCode = sessionStorage.getItem("roomCode");
+    if (!roomCode) {
+      alert("No room code found!");
+      window.location.href = "create-game";
+      return;
     }
-  });
 
-  socket.on("vote-confirmation", (voter) => {
-    if (voter === user.username) {
-      voteForm.classList.add("d-none");
-      resultsDiv.innerHTML = `<div class="alert alert-success">Your vote has been cast!</div>`;
+    const voterLabel = document.getElementById("current-voter");
+    const voteForSelect = document.getElementById("vote-for");
+    const resultsDiv = document.getElementById("results");
+    const voteForm = document.getElementById("vote-form");
+    const voteCountsDiv = document.getElementById("vote-counts");
+
+    const socket = io();
+
+    socket.emit("join-room", { code: roomCode, username: user.username });
+
+    let players = [];
+    try {
+      const res = await fetch(`/api/game/players?code=${roomCode}`);
+      players = await res.json();
+    } catch (err) {
+      alert("Failed to load players.");
+      return;
     }
-  });
 
-  socket.on("revote", ({ tiedPlayers }) => {
-    resultsDiv.innerHTML = `<div class="alert alert-warning">Tie! Revote among: ${tiedPlayers.join(
-      ", "
-    )}</div>`;
-    voteForm.classList.remove("d-none");
+    voterLabel.textContent = user.username;
     voteForSelect.innerHTML = "";
     players.forEach((player) => {
       if (player.username !== user.username) {
@@ -151,21 +126,57 @@ document.addEventListener("DOMContentLoaded", async () => {
         voteForSelect.appendChild(option);
       }
     });
-  });
 
-  socket.on("player-eliminated", ({ username, role }) => {
-    resultsDiv.innerHTML = `<div class="alert alert-danger">${username} has been eliminated! Their role was: <strong>${role}</strong></div>`;
-    voteForm.classList.add("d-none");
-  });
-
-  voteForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const voteFor = voteForSelect.value;
-    socket.emit("cast-vote", {
-      code: roomCode,
-      voter: user.username,
-      voteFor: voteFor,
+    socket.on("vote-update", (votes) => {
+      voteCountsDiv.innerHTML = "";
+      for (const [username, voteCount] of Object.entries(votes)) {
+        const voteItem = document.createElement("p");
+        voteItem.textContent = `${username}: ${voteCount} votes`;
+        voteCountsDiv.appendChild(voteItem);
+      }
     });
-  });
 
-});
+    socket.on("vote-confirmation", (voter) => {
+      if (voter === user.username) {
+        voteForm.classList.add("d-none");
+        resultsDiv.innerHTML = `<div class="alert alert-success">Your vote has been cast!</div>`;
+      }
+    });
+
+    socket.on("revote", ({ tiedPlayers }) => {
+      resultsDiv.innerHTML = `<div class="alert alert-warning">Tie! Revote among: ${tiedPlayers.join(
+        ", "
+      )}</div>`;
+      voteForm.classList.remove("d-none");
+      voteForSelect.innerHTML = "";
+      players.forEach((player) => {
+        if (player.username !== user.username) {
+          const option = document.createElement("option");
+          option.value = player.username;
+          option.textContent = player.username;
+          voteForSelect.appendChild(option);
+        }
+      });
+    });
+
+    socket.on("player-eliminated", ({ username, role }) => {
+      resultsDiv.innerHTML = `<div class="alert alert-danger">${username} has been eliminated! Their role was: <strong>${role}</strong></div>`;
+      voteForm.classList.add("d-none");
+    });
+
+    voteForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const voteFor = voteForSelect.value;
+      socket.emit("cast-vote", {
+        code: roomCode,
+        voter: user.username,
+        voteFor: voteFor,
+      });
+    });
+
+  });
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { Player, VotingRound };
+}
