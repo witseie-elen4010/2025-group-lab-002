@@ -125,13 +125,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Listen for new player joining
     socket.on("player-joined", async ({ username }) => {
       console.log(`username: ${username}`);
+    })
   
-      socket.on('startDiscussion', () => {
-          openChatBtn.click()
-          startDiscussionTime();
-      })
-  
-  
+    socket.on('startDiscussion', () => {
+        openChatBtn.click()
+        startDiscussionTime();
+    })
+    
       try {
         const response = await fetch(`/api/game/get-room?code=${roomCode}`);
         const data = await response.json();
