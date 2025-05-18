@@ -1,25 +1,98 @@
-class Player {
-  constructor(username, role) {
-    this.username = username;
-    this.role = role;
-  }
-}
+document.addEventListener('DOMContentLoaded', async function() {
+    // Get the room code from URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('code');
+    try {
+        const response = await fetch(`/api/game/get-room?code=${roomCode}`);
+        const data = await response.json();
+        room = data.room;
+    } catch (error) {
+        console.error('Error fetching room data:', error);
+    }
+    
+    // Game state
+    let currentPlayerIndex = 0;
+    let players = room.players; 
+    let wordPair = room.wordPair;
+    let hasSubmittedClue = false; // Track if current player has submitted a clue
 
-/**
- * Represents a voting round in a game.
- */
-class VotingRound {
-  /**
-   * Initializes a new VotingRound instance.
-   * @param {Array<Object>} players - An array of player objects. Each player object must have a `username` property.
-   */
-  constructor(players) {
-    this.players = players;
-    this.votes = {};
-    this.players.forEach((player) => {
-      this.votes[player.username] = 0;
+    // DOM elements
+    const clueInputContainer = document.getElementById('clue-input-container');
+    const submitClueBtn = document.getElementById('submit-clue-btn');
+    const playerWordElement = document.getElementById('player-word');
+    const showClueHistoryBtn = document.getElementById('show-clue-history-btn');
+    const openChatBtn = document.getElementById('open-chat-btn');
+    
+    // Initialize Socket.io connection
+    const socket = io();
+    
+    // Display room code
+    document.getElementById('room-code').textContent = roomCode;
+    
+    // Listen for current turn updates from server
+    socket.on('update-turn', (data) => {
+        console.log('Received update-turn event:', data);
+        currentPlayerIndex = data.currentPlayerIndex;
+        hasSubmittedClue = false; // Always reset on server turn broadcast
+        updateTurnDisplay();
     });
-  }
+    
+    // Listen for new player joining
+    socket.on('player-joined', async({username}) => {
+        console.log(`username: ${username}`);
+
+        try {
+            const response = await fetch(`/api/game/get-room?code=${roomCode}`);
+            const data = await response.json();
+            room = data.room;
+        } catch (error) {
+            console.error('Error fetching room data:', error);
+        }
+        
+        displayPlayers(room.players);
+        updateTurnDisplay();
+    });
+ 
+    // Listen for clue submissions
+    socket.on('clueSubmitted', (data) => {
+        const { playerIndex, clue, clueObject } = data;
+    
+        // Add to local clue history
+        if (!room.clues) room.clues = [];
+        room.clues.push(clueObject);
+    
+        // Display clue in speech bubble
+        const playerDiv = document.querySelector(`.player[data-player-index="${playerIndex}"]`);
+        if (playerDiv) {
+            const speechBubble = playerDiv.querySelector('.speech-bubble');
+            speechBubble.textContent = clue;
+            speechBubble.classList.add('has-clue');
+            speechBubble.style.display = 'block';
+        }
+
+      class Player {
+        constructor(username, role) {
+          this.username = username;
+          this.role = role;
+        }
+      }
+
+    /**
+     * Represents a voting round in a game.
+     */
+      class VotingRound {
+      /**
+       * Initializes a new VotingRound instance.
+       * @param {Array<Object>} players - An array of player objects. Each player object must have a `username` property.
+       */
+      constructor(players) {
+        this.players = players;
+        this.votes = {};
+        this.players.forEach((player) => {
+          this.votes[player.username] = 0;
+
+        });
+      }
 
   /**
    * Casts a vote from one player to another.
@@ -124,6 +197,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   socket.on("player-joined", async ({ username }) => {
     console.log(`username: ${username}`);
 
+    socket.on('startDiscussion', () => {
+        openChatBtn.click()
+        startDiscussionTime();
+    })
+
+
     try {
       const response = await fetch(`/api/game/get-room?code=${roomCode}`);
       const data = await response.json();
@@ -215,6 +294,54 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    function startDiscussionTime() {
+        console.log("Starting discussion time...");
+        clueInputContainer.style.display = 'none';
+        submitClueBtn.style.display = 'none';
+    
+        // Create timer display
+        const timerDisplay = document.createElement('div');
+        timerDisplay.id = 'discussion-timer';
+        timerDisplay.style.position = 'fixed';
+        timerDisplay.style.top = '10px';
+        timerDisplay.style.right = '10px';
+        timerDisplay.style.backgroundColor = '#333';
+        timerDisplay.style.color = 'white';
+        timerDisplay.style.padding = '10px 15px';
+        timerDisplay.style.borderRadius = '8px';
+        timerDisplay.style.fontSize = '18px';
+        timerDisplay.style.zIndex = '1001';
+        document.body.appendChild(timerDisplay);
+    
+        let timeRemaining = 60; // 60 seconds
+    
+        const updateTimer = () => {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = `Discussion: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        };
+    
+        updateTimer(); // Initial display
+        const countdown = setInterval(() => {
+            timeRemaining--;
+            updateTimer();
+    
+            if (timeRemaining <= 0) {
+                clearInterval(countdown);
+                document.body.removeChild(timerDisplay); // Remove the timer from screen
+                startVoting(); // Move to voting phase
+            }
+        }, 1000);
+    }
+    
+    function startVoting() {
+        console.log("Starting voting phase...");
+        // TODO: Clear clues or other logic
+
   function createTurnIndicator() {
     // Create turn indicator if it doesn't exist
     if (!document.querySelector(".turn-indicator")) {
@@ -262,6 +389,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       clueInputContainer.style.display = "none";
       document.getElementById("clue-input").disabled = true;
       submitClueBtn.disabled = true;
+
     }
   }
 
@@ -544,4 +672,123 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     document.body.appendChild(modal);
   });
+      
+  openChatBtn.addEventListener('click', function () {
+        // Create overlay
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+    
+        // Create modal content container
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '10px';
+        modalContent.style.maxWidth = '500px';
+        modalContent.style.width = '100%';
+        modalContent.style.maxHeight = '80%';
+        modalContent.style.display = 'flex';
+        modalContent.style.flexDirection = 'column';
+    
+        // Modal title
+        const title = document.createElement('h3');
+        title.textContent = 'Chat';
+    
+        // Chat messages list
+        const chatList = document.createElement('div');
+        chatList.style.flex = '1';
+        chatList.style.overflowY = 'auto';
+        chatList.style.marginBottom = '15px';
+        chatList.style.border = '1px solid #ccc';
+        chatList.style.padding = '10px';
+        chatList.style.borderRadius = '5px';
+    
+        // Fetch and display chat history
+        fetch(`/api/game/get-chat?code=${roomCode}`)
+            .then(res => res.json())
+            .then(data => {
+                const messages = data.chat || [];
+                if (messages.length > 0) {
+                    messages.forEach(({ username, message }) => {
+                        const chatItem = document.createElement('div');
+                        chatItem.classList.add('mb-2');
+                        chatItem.innerHTML = `<strong>${username}</strong>: ${message}`;
+                        chatList.appendChild(chatItem);
+                    });
+                } else {
+                    chatList.textContent = 'No chat messages yet.';
+                }
+            })
+            .catch(err => {
+                chatList.textContent = 'Failed to load chat history.';
+                console.error('Error fetching chat messages:', err);
+            });
+    
+        // Input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Type your message...';
+        input.className = 'form-control mb-2';
+        input.id = 'message-input';
+    
+        // Submit button
+        const submitMessageBtn = document.createElement('button');
+        submitMessageBtn.textContent = 'Send';
+        submitMessageBtn.className = 'btn btn-primary mb-2';
+    
+        submitMessageBtn.addEventListener('click', () => {
+            const message = input.value.trim();
+            if (message) {
+                if (chatList.textContent === "No chat messages yet."){
+                    chatList.textContent = "";
+                }
+
+                socket.emit('submitMessage', { message, username: currentUsername, code:roomCode }); // Sending message
+            }
+            input.value = '';
+
+        });
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitMessageBtn.click();
+            }
+        });
+    
+        // Listen for incoming chat messages
+        socket.on('newMessage', ({ username, message }) => {
+            const newMsg = document.createElement('div');
+            newMsg.innerHTML = `<strong>${username}</strong>: ${message}`;
+            chatList.appendChild(newMsg);
+            chatList.scrollTop = chatList.scrollHeight;
+        });
+    
+        // Close button
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.className = 'btn btn-secondary';
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    
+        // Append elements
+        modalContent.appendChild(title);
+        modalContent.appendChild(chatList);
+        modalContent.appendChild(input);
+        modalContent.appendChild(submitMessageBtn);
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+            // Also submit clue when Enter key is pressed in the input field
+        
+    });
 });

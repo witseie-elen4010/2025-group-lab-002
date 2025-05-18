@@ -131,6 +131,18 @@ function setupGameSocket(io) {
       // }
     });
 
+  socket.on('submitMessage', ({ message, username, code }) => {
+    const room = rooms[code];
+    if (!room) return; // Optional: guard against invalid code
+  
+    room.chat.push({ username, message });
+  
+    io.to(code).emit('newMessage', {
+      username,
+      message
+    });
+  });
+
     socket.on('disconnect', () => {
       console.log('Client disconnected');
     });
