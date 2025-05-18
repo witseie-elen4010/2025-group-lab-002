@@ -9,19 +9,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Error fetching room data:', error);
     }
-
-
     
     // Game state
     let currentPlayerIndex = 0;
     let players = room.players; 
     let wordPair = room.wordPair;
     let hasSubmittedClue = false; // Track if current player has submitted a clue
-    
+
     // DOM elements
     const clueInputContainer = document.getElementById('clue-input-container');
     const submitClueBtn = document.getElementById('submit-clue-btn');
     const playerWordElement = document.getElementById('player-word');
+    const showClueHistoryBtn = document.getElementById('show-clue-history-btn');
     
     // Initialize Socket.io connection
     const socket = io();
@@ -55,17 +54,21 @@ document.addEventListener('DOMContentLoaded', async function() {
  
     // Listen for clue submissions
     socket.on('clueSubmitted', (data) => {
-        const { playerIndex, clue } = data;
-        // Display the clue in the player's speech bubble
+        const { playerIndex, clue, clueObject } = data;
+    
+        // Add to local clue history
+        if (!room.clues) room.clues = [];
+        room.clues.push(clueObject);
+    
+        // Display clue in speech bubble
         const playerDiv = document.querySelector(`.player[data-player-index="${playerIndex}"]`);
         if (playerDiv) {
             const speechBubble = playerDiv.querySelector('.speech-bubble');
             speechBubble.textContent = clue;
             speechBubble.classList.add('has-clue');
-            speechBubble.style.display = 'block'; // Show the speech bubble
+            speechBubble.style.display = 'block';
         }
     });
-    
 
     // Use the room data we already have
     try {
@@ -190,6 +193,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log("Starting voting phase...");
         //CLEAR THE CLUES
     }
+    
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -214,12 +218,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             clueInput.disabled = true;
             submitClueBtn.disabled = true;
 
-            // Emit the clue to the server
+            // Create clue object with player information
+            const clueObject = {
+                playerIndex: currentPlayerIndex,
+                username: currentUsername,
+                clue: clue,
+            };
+
+            // Add the clue to the room's clue array
+            room.clues.push(clueObject);
+
+            // Emit the clue to the server with the clue object
             socket.emit('submitClue', {
                 roomCode,
                 username: currentUsername,
                 playerIndex: currentPlayerIndex,
-                clue
+                clue,
+                clueObject: clueObject
             });
         }
     });
@@ -229,5 +244,68 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (e.key === 'Enter' && !hasSubmittedClue) {
             submitClueBtn.click();
         }
+    });
+    
+    // Handle show clue history button click
+    showClueHistoryBtn.addEventListener('click', function() {
+        // Create a modal to display clue history
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '10px';
+        modalContent.style.maxWidth = '80%';
+        modalContent.style.maxHeight = '80%';
+        modalContent.style.overflow = 'auto';
+        
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.className = 'btn btn-secondary mt-3';
+        closeButton.addEventListener('click', function() {
+            document.body.removeChild(modal);
+        });
+        
+        const title = document.createElement('h3');
+        title.textContent = 'Clue History';
+        
+        const clueList = document.createElement('div');
+        fetch(`/api/game/get-room?code=${roomCode}`)
+        .then(res => res.json())
+        .then(data => {
+          const latestClues = data.room.clues || [];
+      
+          if (latestClues.length > 0) {
+            latestClues.forEach(({ username, clue }) => {
+              const clueItem = document.createElement('div');
+              clueItem.classList.add('mb-2', 'p-2', 'border', 'rounded');
+              clueItem.innerHTML = `<strong>${username}</strong>: ${clue}`;
+              clueList.appendChild(clueItem);
+            });
+          } else {
+            clueList.textContent = 'No clues have been given yet.';
+          }
+        })
+        .catch(err => {
+          clueList.textContent = 'Failed to load clue history.';
+          console.error('Error fetching clue history:', err);
+        });
+        
+        modalContent.appendChild(title);
+        modalContent.appendChild(clueList);
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+        
+        document.body.appendChild(modal);
     });
 });
