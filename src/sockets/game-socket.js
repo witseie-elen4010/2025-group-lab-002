@@ -109,9 +109,11 @@ function setupGameSocket(io) {
         (room.currentPlayerIndex + 1) % room.players.length;
 
       // If all clues are in, start voting!
-      if (room.clues.length === room.players.length) {
-        io.to(roomCode).emit("startVoting", { players: room.players });
-        // Optionally reset currentPlayerIndex or other state here
+
+      
+      if (room.currentPlayerIndex === 0) {
+        // You can emit a new event like 'start-discussion'
+        io.to(roomCode).emit('startDiscussion');
       } else {
         // Otherwise, update turn as usual
         io.to(roomCode).emit("update-turn", {
@@ -141,6 +143,11 @@ function setupGameSocket(io) {
       username,
       message
     });
+
+  });
+
+  socket.on('startVoting', ({ players, roomCode }) => {
+    io.to(roomCode).emit('startVoting', { players });
   });
 
     socket.on('disconnect', () => {

@@ -71,7 +71,7 @@ router.get('/get-chat', (req,res) => {
   }
 
   res.status(200).json({chat: rooms[code].chat});
-  
+});
   
 router.get('/players', (req, res) => {
   const code = req.query.code;
