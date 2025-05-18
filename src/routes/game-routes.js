@@ -18,7 +18,7 @@ router.post('/create-room', async (req, res) => {
     createdAt: new Date(),
     wordPair: wordPair
   };
-  res.status(201).json({ code, wordPair });
+  res.status(201).json({ code, rooms });
 });
 
 router.post('/join-room', (req, res) => {
@@ -28,7 +28,24 @@ router.post('/join-room', (req, res) => {
   }
 
   rooms[code].players.push({ username });
-  res.status(200).json({ message: 'Joined room', players: rooms[code].players });
+  res.status(200).json({ message: 'Joined room', players: rooms[code].players, code: code });
+});
+
+router.get('/play', (req, res) => {
+  const { code } = req.query;
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+  res.sendFile(path.join(__dirname, '../public/play.html'));
+});
+
+router.get('/get-room', (req, res) => {
+  const { code } = req.query;
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+  console.log(rooms[code]);
+  res.status(200).json({ message: 'Room found', room: rooms[code] });
 });
 
 module.exports = { router, rooms };
