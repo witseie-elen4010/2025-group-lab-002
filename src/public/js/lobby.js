@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     roomCodeDisplay.textContent = roomCode;
 
-    const user = JSON.parse(localStorage.getItem('loggedInUser')) || { username: 'Guest' };
+    const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Guest' };
     currentUsername = user.username;
 
     const socket = io();
