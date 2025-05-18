@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/api/game/create-room', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host: user.username })
       });
 
       const data = await res.json();
@@ -36,19 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
         roomCodeElement.textContent = data.code;
         roomCodeContainer.classList.remove('d-none');
 
-        civilianWordElement.textContent = data.wordPair.civilian_word;
-        undercoverWordElement.textContent = data.wordPair.undercover_word;
+        civilianWordElement.textContent = data.rooms[data.code].wordPair.civilian_word;
+        undercoverWordElement.textContent = data.rooms[data.code].wordPair.undercover_word;
         wordPairContainer.classList.remove('d-none');
 
         socket = io();
-        socket.on('connect', () => {
+        socket.on('connect', async () => {
           console.log('Connected to socket server with ID:', socket.id);
-          socket.emit('room-created', { username: user.username, roomCode: data.code });
+          socket.emit('room-created', { code: data.code, username: user.username });
         });
-
-        // socket.on('user-joined', ({ username }) => {
-        //   console.log(`${username} joined your room.`);
-        // });
       } else {
         alert('Failed to create room.');
       }
@@ -83,12 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
         socket = io();
         socket.on('connect', () => {
           console.log('Connected to socket server with ID:', socket.id);
-          socket.emit('join-room', { username: user.username, code });
         });
 
         socket.on('user-joined', ({ username }) => {
           console.log(`${username} joined the room.`);
         });
+
+        window.location.href = `/api/game/lobby?code=${code}`;
       } else {
         alert(data.message || 'Error joining room.');
       }
@@ -96,10 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error joining room:', err);
     }
   });
-
   // Logout
   logoutButton.addEventListener('click', () => {
     sessionStorage.removeItem('loggedInUser');
-    window.location.href = 'login';
+    window.location.href = '/api/users/login';
   });
 });
