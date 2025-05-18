@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const submitClueBtn = document.getElementById('submit-clue-btn');
     const playerWordElement = document.getElementById('player-word');
     const showClueHistoryBtn = document.getElementById('show-clue-history-btn');
+    const openChatBtn = document.getElementById('open-chat-btn');
     
     // Initialize Socket.io connection
     const socket = io();
@@ -69,6 +70,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             speechBubble.style.display = 'block';
         }
     });
+
+    socket.on('startDiscussion', () => {
+        openChatBtn.click()
+        startDiscussionTime();
+    })
 
     // Use the room data we already have
     try {
@@ -179,19 +185,48 @@ document.addEventListener('DOMContentLoaded', async function() {
     ///////////////////////////////////////////////////////////////////////////
 
     function startDiscussionTime() {
-        // This function will be implemented later
         console.log("Starting discussion time...");
-        
-        // After discussion time is over, start voting
-        setTimeout(() => {
-            startVoting();
-        }, 5000); // Placeholder timeout, will be replaced with actual implementation
+        clueInputContainer.style.display = 'none';
+        submitClueBtn.style.display = 'none';
+    
+        // Create timer display
+        const timerDisplay = document.createElement('div');
+        timerDisplay.id = 'discussion-timer';
+        timerDisplay.style.position = 'fixed';
+        timerDisplay.style.top = '10px';
+        timerDisplay.style.right = '10px';
+        timerDisplay.style.backgroundColor = '#333';
+        timerDisplay.style.color = 'white';
+        timerDisplay.style.padding = '10px 15px';
+        timerDisplay.style.borderRadius = '8px';
+        timerDisplay.style.fontSize = '18px';
+        timerDisplay.style.zIndex = '1001';
+        document.body.appendChild(timerDisplay);
+    
+        let timeRemaining = 60; // 60 seconds
+    
+        const updateTimer = () => {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = `Discussion: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        };
+    
+        updateTimer(); // Initial display
+        const countdown = setInterval(() => {
+            timeRemaining--;
+            updateTimer();
+    
+            if (timeRemaining <= 0) {
+                clearInterval(countdown);
+                document.body.removeChild(timerDisplay); // Remove the timer from screen
+                startVoting(); // Move to voting phase
+            }
+        }, 1000);
     }
     
     function startVoting() {
-        // This function will be implemented later
         console.log("Starting voting phase...");
-        //CLEAR THE CLUES
+        // TODO: Clear clues or other logic
     }
     
     ///////////////////////////////////////////////////////////////////////////
@@ -308,4 +343,126 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         document.body.appendChild(modal);
     });
+
+
+     // Handle show chat modal button click
+     openChatBtn.addEventListener('click', function () {
+        // Create overlay
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+    
+        // Create modal content container
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = 'white';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '10px';
+        modalContent.style.maxWidth = '500px';
+        modalContent.style.width = '100%';
+        modalContent.style.maxHeight = '80%';
+        modalContent.style.display = 'flex';
+        modalContent.style.flexDirection = 'column';
+    
+        // Modal title
+        const title = document.createElement('h3');
+        title.textContent = 'Chat';
+    
+        // Chat messages list
+        const chatList = document.createElement('div');
+        chatList.style.flex = '1';
+        chatList.style.overflowY = 'auto';
+        chatList.style.marginBottom = '15px';
+        chatList.style.border = '1px solid #ccc';
+        chatList.style.padding = '10px';
+        chatList.style.borderRadius = '5px';
+    
+        // Fetch and display chat history
+        fetch(`/api/game/get-chat?code=${roomCode}`)
+            .then(res => res.json())
+            .then(data => {
+                const messages = data.chat || [];
+                if (messages.length > 0) {
+                    messages.forEach(({ username, message }) => {
+                        const chatItem = document.createElement('div');
+                        chatItem.classList.add('mb-2');
+                        chatItem.innerHTML = `<strong>${username}</strong>: ${message}`;
+                        chatList.appendChild(chatItem);
+                    });
+                } else {
+                    chatList.textContent = 'No chat messages yet.';
+                }
+            })
+            .catch(err => {
+                chatList.textContent = 'Failed to load chat history.';
+                console.error('Error fetching chat messages:', err);
+            });
+    
+        // Input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Type your message...';
+        input.className = 'form-control mb-2';
+        input.id = 'message-input';
+    
+        // Submit button
+        const submitMessageBtn = document.createElement('button');
+        submitMessageBtn.textContent = 'Send';
+        submitMessageBtn.className = 'btn btn-primary mb-2';
+    
+        submitMessageBtn.addEventListener('click', () => {
+            const message = input.value.trim();
+            if (message) {
+                if (chatList.textContent === "No chat messages yet."){
+                    chatList.textContent = "";
+                }
+
+                socket.emit('submitMessage', { message, username: currentUsername, code:roomCode }); // Sending message
+            }
+            input.value = '';
+
+        });
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitMessageBtn.click();
+            }
+        });
+    
+        // Listen for incoming chat messages
+        socket.on('newMessage', ({ username, message }) => {
+            const newMsg = document.createElement('div');
+            newMsg.innerHTML = `<strong>${username}</strong>: ${message}`;
+            chatList.appendChild(newMsg);
+            chatList.scrollTop = chatList.scrollHeight;
+        });
+    
+        // Close button
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.className = 'btn btn-secondary';
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    
+        // Append elements
+        modalContent.appendChild(title);
+        modalContent.appendChild(chatList);
+        modalContent.appendChild(input);
+        modalContent.appendChild(submitMessageBtn);
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+            // Also submit clue when Enter key is pressed in the input field
+        
+    });
+
 });

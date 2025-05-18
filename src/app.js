@@ -4,7 +4,6 @@ const express = require('express');
 const app = express();
 const { router } = require('./routes/user-routes.js');
 const { router: gameRouter } = require('./routes/game-routes.js');
-const setupGameSocket = require('./sockets/game-socket.js');
 const voteRouter = require('./routes/vote-routes.js')
 
 // Middleware for JSON and URL-encoded body parsing

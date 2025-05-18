@@ -23,7 +23,8 @@ router.post('/create-room', async (req, res) => {
     wordPair: wordPair,
     hostname : host,
     clues : [],
-    currentPlayerIndex:0
+    currentPlayerIndex:0, 
+    chat : []
   };
   res.status(201).json({ code, rooms });
 });
@@ -63,6 +64,15 @@ router.get('/lobby', (req, res) => {
     return res.status(404).json({ message: 'Room not found' });
   }
   res.sendFile(path.join(__dirname, '../public/lobby.html'));
+});
+
+router.get('/get-chat', (req,res) => {
+  const { code } = req.query;
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+
+  res.status(200).json({chat: rooms[code].chat});
 });
 
 module.exports = { router, rooms };
