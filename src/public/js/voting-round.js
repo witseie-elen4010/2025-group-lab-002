@@ -5,29 +5,19 @@ class Player {
   }
 }
 
-/**
- * Represents a voting round in a game.
- */
 class VotingRound {
-  /**
-   * Initializes a new VotingRound instance.
-   * @param {Array<Object>} players - An array of player objects. Each player object must have a `username` property.
-   */
   constructor(players) {
     this.players = players;
+    this.resetVotes();
+  }
+
+  resetVotes() {
     this.votes = {};
     this.players.forEach((player) => {
       this.votes[player.username] = 0;
     });
   }
 
-  /**
-   * Casts a vote from one player to another.
-   * @param {string} voterUsername - The username of the player casting the vote.
-   * @param {string} voteForUsername - The username of the player being voted for.
-   * @throws {Error} Throws an error if the voter or vote target is invalid.
-   * @throws {Error} Throws an error if a player attempts to vote for themselves.
-   */
   castVote(voterUsername, voteForUsername) {
     const voter = this.players.find(
       (player) => player.username === voterUsername
@@ -45,12 +35,6 @@ class VotingRound {
     this.votes[voteFor.username] += 1;
   }
 
-  /**
-   * Determines the player(s) to be eliminated based on the votes.
-   * If there is a tie, returns an array of usernames of the tied players.
-   * @returns {Object|null|Array<string>} The eliminated player object, null if no votes,
-   * or an array of usernames in case of a tie.
-   */
   getEliminatedPlayer() {
     let maxVotes = 0;
     let eliminatedPlayer = null;
@@ -65,9 +49,7 @@ class VotingRound {
     }
 
     const totalVotesCast = Object.values(this.votes).reduce((a, b) => a + b, 0);
-    if (totalVotesCast === 0) {
-      return null;
-    }
+    if (totalVotesCast === 0) return null;
 
     const tiedPlayers = Object.entries(this.votes).filter(
       ([, voteCount]) => voteCount === maxVotes
@@ -79,104 +61,151 @@ class VotingRound {
 
     return eliminatedPlayer;
   }
+
+  eliminatePlayer(username) {
+    this.players = this.players.filter(
+      (player) => player.username !== username
+    );
+    this.resetVotes();
+  }
+
+  checkWinCondition() {
+    const civilians = this.players.filter((p) => p.role === "Civilian").length;
+    const impostors = this.players.filter(
+      (p) => p.role === "Undercover" || p.role === "Mr. White"
+    ).length;
+
+    if (impostors === 0) {
+      return { winner: "Civilians" };
+    }
+    if (civilians <= 1) {
+      return { winner: "Impostors" };
+    }
+    return null;
+  }
+}
+
+function updateVoteCounts(votes) {
+  const voteCountsDiv = document.getElementById("vote-counts");
+  voteCountsDiv.innerHTML = "";
+
+  for (const [username, voteCount] of Object.entries(votes)) {
+    const voteItem = document.createElement("p");
+    voteItem.textContent = `${username}: ${voteCount} votes`;
+    voteCountsDiv.appendChild(voteItem);
+  }
 }
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
-  document.addEventListener("DOMContentLoaded", async () => {
-    const user = JSON.parse(sessionStorage.getItem("loggedInUser"));
-    if (!user) {
-      alert("You must be logged in!");
-      window.location.href = "login";
-      return;
-    }
+  document.addEventListener("DOMContentLoaded", () => {
+    const players = [
+      new Player("Aaliyah", "Civilian"),
+      new Player("Glen", "Civilian"),
+      new Player("Noah", "Undercover"),
+      new Player("Rizwaanah", "Mr. White"),
+    ];
 
-    const roomCode = sessionStorage.getItem("roomCode");
-    if (!roomCode) {
-      alert("No room code found!");
-      window.location.href = "create-game";
-      return;
-    }
+    let votingRound = new VotingRound(players);
+    let currentVoterIndex = 0;
+    let roundNumber = 1;
 
     const voterLabel = document.getElementById("current-voter");
     const voteForSelect = document.getElementById("vote-for");
     const resultsDiv = document.getElementById("results");
     const voteForm = document.getElementById("vote-form");
-    const voteCountsDiv = document.getElementById("vote-counts");
 
-    const socket = io();
-
-    socket.emit("join-room", { code: roomCode, username: user.username });
-
-    let players = [];
-    try {
-      const res = await fetch(`/api/game/players?code=${roomCode}`);
-      players = await res.json();
-    } catch (err) {
-      alert("Failed to load players.");
-      return;
+    let roundDisplay = document.getElementById("voting-round-display");
+    if (!roundDisplay) {
+      roundDisplay = document.createElement("h3");
+      roundDisplay.id = "voting-round-display";
+      roundDisplay.className = "text-center mb-3";
+      voteForm.parentNode.insertBefore(roundDisplay, voteForm);
     }
 
-    voterLabel.textContent = user.username;
-    voteForSelect.innerHTML = "";
-    players.forEach((player) => {
-      if (player.username !== user.username) {
-        const option = document.createElement("option");
-        option.value = player.username;
-        option.textContent = player.username;
-        voteForSelect.appendChild(option);
-      }
-    });
+    function updateRoundDisplay() {
+      roundDisplay.textContent = `Voting Round: ${roundNumber}`;
+    }
 
-    socket.on("vote-update", (votes) => {
-      voteCountsDiv.innerHTML = "";
-      for (const [username, voteCount] of Object.entries(votes)) {
-        const voteItem = document.createElement("p");
-        voteItem.textContent = `${username}: ${voteCount} votes`;
-        voteCountsDiv.appendChild(voteItem);
-      }
-    });
-
-    socket.on("vote-confirmation", (voter) => {
-      if (voter === user.username) {
-        voteForm.classList.add("d-none");
-        resultsDiv.innerHTML = `<div class="alert alert-success">Your vote has been cast!</div>`;
-      }
-    });
-
-    socket.on("revote", ({ tiedPlayers }) => {
-      resultsDiv.innerHTML = `<div class="alert alert-warning">Tie! Revote among: ${tiedPlayers.join(
-        ", "
-      )}</div>`;
-      voteForm.classList.remove("d-none");
+    function initializeVoting() {
+      updateRoundDisplay();
+      voterLabel.textContent = `${votingRound.players[currentVoterIndex].username}`;
       voteForSelect.innerHTML = "";
-      players.forEach((player) => {
-        if (player.username !== user.username) {
+      votingRound.players.forEach((player) => {
+        if (
+          player.username !== votingRound.players[currentVoterIndex].username
+        ) {
           const option = document.createElement("option");
           option.value = player.username;
-          option.textContent = player.username;
+          option.textContent = `${player.username}`;
           voteForSelect.appendChild(option);
         }
       });
-    });
 
-    socket.on("player-eliminated", ({ username, role }) => {
-      resultsDiv.innerHTML = `<div class="alert alert-danger">${username} has been eliminated! Their role was: <strong>${role}</strong></div>`;
-      voteForm.classList.add("d-none");
-    });
+      updateVoteCounts(votingRound.votes);
+    }
 
-    voteForm.addEventListener("submit", (event) => {
+    voteForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const voteFor = voteForSelect.value;
-      socket.emit("cast-vote", {
-        code: roomCode,
-        voter: user.username,
-        voteFor: voteFor,
-      });
+
+      try {
+        votingRound.castVote(
+          votingRound.players[currentVoterIndex].username,
+          voteFor
+        );
+
+        currentVoterIndex++;
+
+        if (currentVoterIndex < votingRound.players.length) {
+          initializeVoting();
+        } else {
+          updateVoteCounts(votingRound.votes);
+
+          const eliminatedPlayer = votingRound.getEliminatedPlayer();
+
+          if (Array.isArray(eliminatedPlayer)) {
+            resultsDiv.innerHTML = `
+                      <div class="alert alert-warning" role="alert">
+                          The votes resulted in a tie between: <strong>${eliminatedPlayer.join(
+                            ", "
+                          )}</strong>. Restarting the voting process.
+                      </div>
+                  `;
+            currentVoterIndex = 0;
+            votingRound.resetVotes();
+            initializeVoting();
+          } else if (eliminatedPlayer) {
+            resultsDiv.innerHTML = `
+                      <div class="alert alert-success" role="alert">
+                          <p> You eliminated a <strong>${eliminatedPlayer.role}</strong> </p>
+                          <p> The player eliminated is: <strong>${eliminatedPlayer.username}</strong> </p>
+                      </div>
+                  `;
+            votingRound.eliminatePlayer(eliminatedPlayer.username);
+
+            const win = votingRound.checkWinCondition();
+            if (win) {
+              resultsDiv.innerHTML += `<div class="alert alert-info mt-3"><strong>${win.winner} win the game!</strong></div>`;
+              voteForm.classList.add("d-none");
+              roundDisplay.textContent = `Game Over`;
+            } else {
+              currentVoterIndex = 0;
+              roundNumber++;
+              initializeVoting();
+            }
+          }
+        }
+      } catch (error) {
+        resultsDiv.innerHTML = `
+              <div class="alert alert-danger" role="alert">
+                  Error: ${error.message}
+              </div>
+          `;
+      }
     });
 
+    initializeVoting();
   });
 }
 
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = { Player, VotingRound };
-}
+module.exports = { Player, VotingRound, updateVoteCounts };
