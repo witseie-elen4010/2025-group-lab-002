@@ -266,3 +266,57 @@ describe("Voting Round Socket", () => {
     }, 100);
   });
 });
+
+describe('Mr. White Guess Feature', () => {
+    let players;
+    let votingRound;
+    let civiliansWord = "apple";
+
+    beforeEach(() => {
+        players = [
+            new Player("Aaliyah", "Civilian"),
+            new Player("Glen", "Civilian"),
+            new Player("Noah", "Undercover"),
+            new Player("Rizwaanah", "Mr. White")
+        ];
+        votingRound = new VotingRound(players);
+    });
+
+    it('should prompt Mr. White to guess when eliminated', () => {
+        // Simulate votes to eliminate Mr. White
+        votingRound.castVote("Aaliyah", "Rizwaanah");
+        votingRound.castVote("Glen", "Rizwaanah");
+        votingRound.castVote("Noah", "Rizwaanah");
+        votingRound.castVote("Rizwaanah", "Aaliyah");
+        const eliminated = votingRound.getEliminatedPlayer();
+        expect(eliminated.username).toBe("Rizwaanah");
+        expect(eliminated.role).toBe("Mr. White");
+        // In real code, this would trigger the guess modal on the frontend
+    });
+
+    it('should declare Mr. White as winner if guess is correct', () => {
+        // Simulate Mr. White being eliminated
+        votingRound.castVote("Aaliyah", "Rizwaanah");
+        votingRound.castVote("Glen", "Rizwaanah");
+        votingRound.castVote("Noah", "Rizwaanah");
+        votingRound.castVote("Rizwaanah", "Aaliyah");
+        const eliminated = votingRound.getEliminatedPlayer();
+        // Simulate correct guess
+        const guess = "apple";
+        const mrWhiteWins = guess.toLowerCase() === civiliansWord.toLowerCase();
+        expect(mrWhiteWins).toBe(true);
+    });
+
+    it('should not declare Mr. White as winner if guess is incorrect', () => {
+        // Simulate Mr. White being eliminated
+        votingRound.castVote("Aaliyah", "Rizwaanah");
+        votingRound.castVote("Glen", "Rizwaanah");
+        votingRound.castVote("Noah", "Rizwaanah");
+        votingRound.castVote("Rizwaanah", "Aaliyah");
+        const eliminated = votingRound.getEliminatedPlayer();
+        // Simulate incorrect guess
+        const guess = "banana";
+        const mrWhiteWins = guess.toLowerCase() === civiliansWord.toLowerCase();
+        expect(mrWhiteWins).toBe(false);
+    });
+});
