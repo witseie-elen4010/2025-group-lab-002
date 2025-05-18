@@ -22,7 +22,7 @@ describe('Game Routes', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.code).toBe('ABCDE');
-    expect(res.body.wordPair).toEqual({ civilian_word: 'apple', undercover_word: 'pear' });
+    expect(res.body.rooms['ABCDE'].wordPair).toEqual({ civilian_word: 'apple', undercover_word: 'pear' });
     expect(rooms['ABCDE']).toBeDefined();
   });
 
@@ -38,7 +38,7 @@ describe('Game Routes', () => {
       .send({ code: 'ABCDE', username: 'test-player' });
 
     expect(res.status).toBe(200);
-    expect(res.body.players).toEqual([{ username: 'test-player' }]);
+    expect(res.body.players).toEqual([{ username: 'test-player', playerID: 0 }]);
   });
 
   test('POST /api/game/join-room should return 404 for non-existent room', async () => { // updated route

@@ -3,7 +3,6 @@ const path = require('path')
 const router = express.Router();
 const generateCode = require('../utils/create-game-code');
 const getRandomWordPair = require('../utils/get-word-pair');
-const { hostname } = require('os');
 
 
 const rooms = {}; // In-memory store for now
@@ -16,12 +15,10 @@ router.post('/create-room', async (req, res) => {
   const code = generateCode();
   const wordPair = await getRandomWordPair();
   const data = req.body; 
-  host = data.host
   rooms[code] = {
     players: [],
     createdAt: new Date(),
     wordPair: wordPair,
-    hostname : host,
     clues : [],
     currentPlayerIndex:0
   };
