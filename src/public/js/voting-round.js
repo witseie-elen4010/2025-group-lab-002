@@ -96,6 +96,8 @@ function updateVoteCounts(votes) {
   }
 }
 
+let civiliansWord = "apple"; // Example word, set this dynamically in your real game
+
 if (typeof window !== "undefined" && typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     const players = [
@@ -144,6 +146,53 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
       updateVoteCounts(votingRound.votes);
     }
 
+    // Add reference to guess modal and input
+    let mrWhiteGuessModal, mrWhiteGuessInput, mrWhiteGuessSubmit;
+
+    // Create modal for Mr. White's guess
+    function createMrWhiteGuessModal() {
+      mrWhiteGuessModal = document.createElement("div");
+      mrWhiteGuessModal.className = "modal fade";
+      mrWhiteGuessModal.id = "mrWhiteGuessModal";
+      mrWhiteGuessModal.tabIndex = -1;
+      mrWhiteGuessModal.innerHTML = `
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Mr. White's Guess</h5>
+            </div>
+            <div class="modal-body">
+              <p>You have been eliminated! Guess the civilians' word to win:</p>
+              <input type="text" id="mrWhiteGuessInput" class="form-control" placeholder="Enter your guess">
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="mrWhiteGuessSubmit" class="btn btn-primary">Submit Guess</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mrWhiteGuessModal);
+
+      mrWhiteGuessInput = mrWhiteGuessModal.querySelector("#mrWhiteGuessInput");
+      mrWhiteGuessSubmit = mrWhiteGuessModal.querySelector("#mrWhiteGuessSubmit");
+    }
+
+    createMrWhiteGuessModal();
+
+    // Show the modal
+    function showMrWhiteGuessModal(callback) {
+      mrWhiteGuessInput.value = "";
+      mrWhiteGuessModal.style.display = "block";
+      mrWhiteGuessModal.classList.add("show");
+      mrWhiteGuessModal.style.backgroundColor = "rgba(0,0,0,0.5)";
+      mrWhiteGuessSubmit.onclick = function () {
+        const guess = mrWhiteGuessInput.value.trim().toLowerCase();
+        mrWhiteGuessModal.style.display = "none";
+        mrWhiteGuessModal.classList.remove("show");
+        callback(guess);
+      };
+    }
+
     voteForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const voteFor = voteForSelect.value;
@@ -175,23 +224,57 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
             votingRound.resetVotes();
             initializeVoting();
           } else if (eliminatedPlayer) {
-            resultsDiv.innerHTML = `
+            // If Mr. White is eliminated, prompt for guess
+            if (eliminatedPlayer.role === "Mr. White") {
+              showMrWhiteGuessModal((guess) => {
+                if (guess === civiliansWord.toLowerCase()) {
+                  resultsDiv.innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                      <p>Mr. White guessed the word <strong>${civiliansWord}</strong> correctly and wins the game!</p>
+                    </div>
+                  `;
+                  voteForm.classList.add("d-none");
+                  roundDisplay.textContent = `Game Over`;
+                } else {
+                  resultsDiv.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                      <p>Mr. White guessed <strong>${guess}</strong>, which is incorrect.</p>
+                      <p>Mr. White has been eliminated.</p>
+                    </div>
+                  `;
+                  votingRound.eliminatePlayer(eliminatedPlayer.username);
+
+                  const win = votingRound.checkWinCondition();
+                  if (win) {
+                    resultsDiv.innerHTML += `<div class="alert alert-info mt-3"><strong>${win.winner} win the game!</strong></div>`;
+                    voteForm.classList.add("d-none");
+                    roundDisplay.textContent = `Game Over`;
+                  } else {
+                    currentVoterIndex = 0;
+                    roundNumber++;
+                    initializeVoting();
+                  }
+                }
+              });
+            } else {
+              resultsDiv.innerHTML = `
                       <div class="alert alert-success" role="alert">
                           <p> You eliminated a <strong>${eliminatedPlayer.role}</strong> </p>
                           <p> The player eliminated is: <strong>${eliminatedPlayer.username}</strong> </p>
                       </div>
                   `;
-            votingRound.eliminatePlayer(eliminatedPlayer.username);
+              votingRound.eliminatePlayer(eliminatedPlayer.username);
 
-            const win = votingRound.checkWinCondition();
-            if (win) {
-              resultsDiv.innerHTML += `<div class="alert alert-info mt-3"><strong>${win.winner} win the game!</strong></div>`;
-              voteForm.classList.add("d-none");
-              roundDisplay.textContent = `Game Over`;
-            } else {
-              currentVoterIndex = 0;
-              roundNumber++;
-              initializeVoting();
+              const win = votingRound.checkWinCondition();
+              if (win) {
+                resultsDiv.innerHTML += `<div class="alert alert-info mt-3"><strong>${win.winner} win the game!</strong></div>`;
+                voteForm.classList.add("d-none");
+                roundDisplay.textContent = `Game Over`;
+              } else {
+                currentVoterIndex = 0;
+                roundNumber++;
+                initializeVoting();
+              }
             }
           }
         }
