@@ -9,11 +9,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Error fetching room data:', error);
     }
+
+
     
     // Game state
     let currentPlayerIndex = 0;
-    let players = room.players;
-    let currentUsername = ''; 
+    let players = room.players; 
     let wordPair = room.wordPair;
     let hasSubmittedClue = false; // Track if current player has submitted a clue
     
@@ -30,11 +31,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Listen for current turn updates from server
     socket.on('update-turn', (data) => {
+        console.log('Received update-turn event:', data);
         currentPlayerIndex = data.currentPlayerIndex;
-        // Reset the clue submission flag when it's a new player's turn
-        if (players[currentPlayerIndex].username === currentUsername) {
-            hasSubmittedClue = false;
-        }
+        hasSubmittedClue = false; // Always reset on server turn broadcast
         updateTurnDisplay();
     });
     
@@ -53,10 +52,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         displayPlayers(room.players);
         updateTurnDisplay();
     });
-
-
-
-    
+ 
     // Listen for clue submissions
     socket.on('clueSubmitted', (data) => {
         const { playerIndex, clue } = data;
@@ -102,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const container = document.getElementById('players-container');
         container.innerHTML = ''; // Clear container
         const colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33']; // Different colors for each player
-        console.log(players);
         
         for (let index = 0; index < players.length; index++) {
             const player = players[index];
@@ -140,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     function updateTurnDisplay() {
         const turnIndicator = document.querySelector('.turn-indicator');
+        console.log(`CURRENT PLAYER INDEX: ${currentPlayerIndex}`)
         const currentPlayer = players[currentPlayerIndex];
         
         if (!currentPlayer) return; // Guard against undefined players
@@ -155,6 +151,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
         
+        console.log(`current player: ${currentPlayer.playerID}`);
+
         // Show or hide clue input container based on turn and submission status
         if (currentPlayer.username === currentUsername && !hasSubmittedClue) {
             // Show clue input only if it's the current user's turn and they haven't submitted a clue yet
@@ -200,54 +198,29 @@ document.addEventListener('DOMContentLoaded', async function() {
     submitClueBtn.addEventListener('click', function() {
         const clueInput = document.getElementById('clue-input');
         const clue = clueInput.value.trim();
-        
+
         if (clue && !hasSubmittedClue) {
-            // Mark that this player has submitted their clue
             hasSubmittedClue = true;
-            
+
             // Display the clue in the current player's speech bubble
             const currentPlayerDiv = document.querySelector(`.player[data-player-index="${currentPlayerIndex}"]`);
             const speechBubble = currentPlayerDiv.querySelector('.speech-bubble');
             speechBubble.textContent = clue;
             speechBubble.classList.add('has-clue');
-            speechBubble.style.display = 'block'; // Show the speech bubble
-            
-            // Clear input
+            speechBubble.style.display = 'block';
+
             clueInput.value = '';
-            
-            // Hide the clue input container after submission
             clueInputContainer.style.display = 'none';
-            
-            // Disable input and button after submission
-            document.getElementById('clue-input').disabled = true;
+            clueInput.disabled = true;
             submitClueBtn.disabled = true;
-            
-            // Emit the clue to the server via socket.io
+
+            // Emit the clue to the server
             socket.emit('submitClue', {
                 roomCode,
                 username: currentUsername,
                 playerIndex: currentPlayerIndex,
                 clue
             });
-            
-            // Move to the next player's turn after submitting a clue
-            const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-            currentPlayerIndex = nextPlayerIndex;
-            
-            // Emit an event to update all clients about the turn change
-            socket.emit('nextTurn', {
-                roomCode,
-                currentPlayerIndex: nextPlayerIndex
-            });
-            
-            // Update the turn display locally
-            updateTurnDisplay();
-            
-            // Check if this was the last player to give a clue
-            if (currentPlayerIndex === 0) {
-                // If we've gone through all players, start discussion time
-                startDiscussionTime();
-            }
         }
     });
     

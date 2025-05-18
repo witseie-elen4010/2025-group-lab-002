@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/api/game/create-room', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host: user.username })
       });
 
       const data = await res.json();
@@ -72,12 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
         socket = io();
         socket.on('connect', () => {
           console.log('Connected to socket server with ID:', socket.id);
-          socket.emit('join-room', { username: user.username, code: data.code });
         });
 
         socket.on('user-joined', ({ username }) => {
           console.log(`${username} joined the room.`);
         });
+
+        window.location.href = `/api/game/lobby?code=${code}`;
       } else {
         alert(data.message || 'Error joining room.');
       }

@@ -3,6 +3,8 @@ const path = require('path')
 const router = express.Router();
 const generateCode = require('../utils/create-game-code');
 const getRandomWordPair = require('../utils/get-word-pair');
+const { hostname } = require('os');
+
 
 const rooms = {}; // In-memory store for now
 
@@ -13,10 +15,15 @@ router.get('/join', (req, res) => {
 router.post('/create-room', async (req, res) => {
   const code = generateCode();
   const wordPair = await getRandomWordPair();
+  const data = req.body; 
+  host = data.host
   rooms[code] = {
     players: [],
     createdAt: new Date(),
-    wordPair: wordPair
+    wordPair: wordPair,
+    hostname : host,
+    clues : [],
+    currentPlayerIndex:0
   };
   res.status(201).json({ code, rooms });
 });
@@ -26,8 +33,10 @@ router.post('/join-room', (req, res) => {
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
   }
+  const playerID = rooms[code].players.length ;
 
-  rooms[code].players.push({ username });
+
+  rooms[code].players.push({ username, playerID });
   res.status(200).json({ message: 'Joined room', players: rooms[code].players, code: code });
 });
 
@@ -44,8 +53,16 @@ router.get('/get-room', (req, res) => {
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
   }
-  console.log(rooms[code]);
   res.status(200).json({ message: 'Room found', room: rooms[code] });
+});
+
+router.get('/lobby', (req, res) => {
+  const { code } = req.query;
+  console.log(`code: ${code}`);
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+  res.sendFile(path.join(__dirname, '../public/lobby.html'));
 });
 
 module.exports = { router, rooms };
