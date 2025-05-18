@@ -1,208 +1,91 @@
-document.addEventListener('DOMContentLoaded', async function() {
+class Player {
+    constructor(username, role) {
+      this.username = username;
+      this.role = role;
+    }
+  }
+  
+  /**
+   * Represents a voting round in a game.
+   */
+  class VotingRound {
+    /**
+     * Initializes a new VotingRound instance.
+     * @param {Array<Object>} players - An array of player objects. Each player object must have a `username` property.
+     */
+    constructor(players) {
+      this.players = players;
+      this.votes = {};
+      this.players.forEach((player) => {
+        this.votes[player.username] = 0;
+      });
+    }
+  
+    /**
+     * Casts a vote from one player to another.
+     * @param {string} voterUsername - The username of the player casting the vote.
+     * @param {string} voteForUsername - The username of the player being voted for.
+     * @throws {Error} Throws an error if the voter or vote target is invalid.
+     * @throws {Error} Throws an error if a player attempts to vote for themselves.
+     */
+    castVote(voterUsername, voteForUsername) {
+      const voter = this.players.find(
+        (player) => player.username === voterUsername
+      );
+      const voteFor = this.players.find(
+        (player) => player.username === voteForUsername
+      );
+  
+      if (!voter || !voteFor) {
+        throw new Error("Invalid voter or vote target.");
+      }
+      if (voter.username === voteFor.username) {
+        throw new Error("A player cannot vote for themselves.");
+      }
+      this.votes[voteFor.username] += 1;
+    }
+  
+    /**
+     * Determines the player(s) to be eliminated based on the votes.
+     * If there is a tie, returns an array of usernames of the tied players.
+     * @returns {Object|null|Array<string>} The eliminated player object, null if no votes,
+     * or an array of usernames in case of a tie.
+     */
+    getEliminatedPlayer() {
+      let maxVotes = 0;
+      let eliminatedPlayer = null;
+  
+      for (const [username, voteCount] of Object.entries(this.votes)) {
+        if (voteCount > maxVotes) {
+          maxVotes = voteCount;
+          eliminatedPlayer = this.players.find(
+            (player) => player.username === username
+          );
+        }
+      }
+  
+      const totalVotesCast = Object.values(this.votes).reduce((a, b) => a + b, 0);
+      if (totalVotesCast === 0) {
+        return null;
+      }
+  
+      const tiedPlayers = Object.entries(this.votes).filter(
+        ([, voteCount]) => voteCount === maxVotes
+      );
+  
+      if (tiedPlayers.length > 1) {
+        return tiedPlayers.map(([username]) => username);
+      }
+  
+      return eliminatedPlayer;
+    }
+  }
+
+
+document.addEventListener('DOMContentLoaded', async function () {
     // Get the room code from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const roomCode = urlParams.get('code');
-    try {
-        const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-        const data = await response.json();
-        room = data.room;
-    } catch (error) {
-        console.error('Error fetching room data:', error);
-    }
-    
-    // Game state
-    let currentPlayerIndex = 0;
-    let players = room.players; 
-    let wordPair = room.wordPair;
-    let hasSubmittedClue = false; // Track if current player has submitted a clue
-
-    // DOM elements
-    const clueInputContainer = document.getElementById('clue-input-container');
-    const submitClueBtn = document.getElementById('submit-clue-btn');
-    const playerWordElement = document.getElementById('player-word');
-    const showClueHistoryBtn = document.getElementById('show-clue-history-btn');
-    const openChatBtn = document.getElementById('open-chat-btn');
-    
-    // Initialize Socket.io connection
-    const socket = io();
-    
-    // Display room code
-    document.getElementById('room-code').textContent = roomCode;
-    
-    // Listen for current turn updates from server
-    socket.on('update-turn', (data) => {
-        console.log('Received update-turn event:', data);
-        currentPlayerIndex = data.currentPlayerIndex;
-        hasSubmittedClue = false; // Always reset on server turn broadcast
-        updateTurnDisplay();
-    });
-    
-    // Listen for new player joining
-    socket.on('player-joined', async({username}) => {
-        console.log(`username: ${username}`);
-
-        try {
-            const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-            const data = await response.json();
-            room = data.room;
-        } catch (error) {
-            console.error('Error fetching room data:', error);
-        }
-        
-        displayPlayers(room.players);
-        updateTurnDisplay();
-    });
- 
-    // Listen for clue submissions
-    socket.on('clueSubmitted', (data) => {
-        const { playerIndex, clue, clueObject } = data;
-    
-        // Add to local clue history
-        if (!room.clues) room.clues = [];
-        room.clues.push(clueObject);
-    
-        // Display clue in speech bubble
-        const playerDiv = document.querySelector(`.player[data-player-index="${playerIndex}"]`);
-        if (playerDiv) {
-            const speechBubble = playerDiv.querySelector('.speech-bubble');
-            speechBubble.textContent = clue;
-            speechBubble.classList.add('has-clue');
-            speechBubble.style.display = 'block';
-        }
-
-      class Player {
-        constructor(username, role) {
-          this.username = username;
-          this.role = role;
-        }
-      }
-
-    /**
-     * Represents a voting round in a game.
-     */
-      class VotingRound {
-      /**
-       * Initializes a new VotingRound instance.
-       * @param {Array<Object>} players - An array of player objects. Each player object must have a `username` property.
-       */
-      constructor(players) {
-        this.players = players;
-        this.votes = {};
-        this.players.forEach((player) => {
-          this.votes[player.username] = 0;
-
-        });
-      }
-
-  /**
-   * Casts a vote from one player to another.
-   * @param {string} voterUsername - The username of the player casting the vote.
-   * @param {string} voteForUsername - The username of the player being voted for.
-   * @throws {Error} Throws an error if the voter or vote target is invalid.
-   * @throws {Error} Throws an error if a player attempts to vote for themselves.
-   */
-  castVote(voterUsername, voteForUsername) {
-    const voter = this.players.find(
-      (player) => player.username === voterUsername
-    );
-    const voteFor = this.players.find(
-      (player) => player.username === voteForUsername
-    );
-
-    if (!voter || !voteFor) {
-      throw new Error("Invalid voter or vote target.");
-    }
-    if (voter.username === voteFor.username) {
-      throw new Error("A player cannot vote for themselves.");
-    }
-    this.votes[voteFor.username] += 1;
-  }
-
-  /**
-   * Determines the player(s) to be eliminated based on the votes.
-   * If there is a tie, returns an array of usernames of the tied players.
-   * @returns {Object|null|Array<string>} The eliminated player object, null if no votes,
-   * or an array of usernames in case of a tie.
-   */
-  getEliminatedPlayer() {
-    let maxVotes = 0;
-    let eliminatedPlayer = null;
-
-    for (const [username, voteCount] of Object.entries(this.votes)) {
-      if (voteCount > maxVotes) {
-        maxVotes = voteCount;
-        eliminatedPlayer = this.players.find(
-          (player) => player.username === username
-        );
-      }
-    }
-
-    const totalVotesCast = Object.values(this.votes).reduce((a, b) => a + b, 0);
-    if (totalVotesCast === 0) {
-      return null;
-    }
-
-    const tiedPlayers = Object.entries(this.votes).filter(
-      ([, voteCount]) => voteCount === maxVotes
-    );
-
-    if (tiedPlayers.length > 1) {
-      return tiedPlayers.map(([username]) => username);
-    }
-
-    return eliminatedPlayer;
-  }
-}
-
-document.addEventListener("DOMContentLoaded", async function () {
-  // Get the room code from URL query parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get("code");
-  try {
-    const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-    const data = await response.json();
-    room = data.room;
-  } catch (error) {
-    console.error("Error fetching room data:", error);
-  }
-
-  // Game state
-  let votingRound = null;
-  let currentPlayerIndex = 0;
-  let players = room.players;
-  let wordPair = room.wordPair;
-  let hasSubmittedClue = false; // Track if current player has submitted a clue
-
-  // DOM elements
-  const clueInputContainer = document.getElementById("clue-input-container");
-  const submitClueBtn = document.getElementById("submit-clue-btn");
-  const playerWordElement = document.getElementById("player-word");
-  const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
-
-  // Initialize Socket.io connection
-  const socket = io();
-
-  // Display room code
-  document.getElementById("room-code").textContent = roomCode;
-
-  // Listen for current turn updates from server
-  socket.on("update-turn", (data) => {
-    console.log("Received update-turn event:", data);
-    currentPlayerIndex = data.currentPlayerIndex;
-    hasSubmittedClue = false; // Always reset on server turn broadcast
-    updateTurnDisplay();
-  });
-
-  // Listen for new player joining
-  socket.on("player-joined", async ({ username }) => {
-    console.log(`username: ${username}`);
-
-    socket.on('startDiscussion', () => {
-        openChatBtn.click()
-        startDiscussionTime();
-    })
-
-
+    const roomCode = urlParams.get("code");
     try {
       const response = await fetch(`/api/game/get-room?code=${roomCode}`);
       const data = await response.json();
@@ -210,30 +93,77 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (error) {
       console.error("Error fetching room data:", error);
     }
+  
+    // Game state
+    let votingRound = null;
+    let currentPlayerIndex = 0;
+    let players = room.players;
+    let wordPair = room.wordPair;
+    let hasSubmittedClue = false; // Track if current player has submitted a clue
+  
+    // DOM elements
+    const clueInputContainer = document.getElementById("clue-input-container");
+    const submitClueBtn = document.getElementById("submit-clue-btn");
+    const playerWordElement = document.getElementById("player-word");
+    const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
+    const openChatBtn = document.getElementById("open-chat-btn");
+  
+    // Initialize Socket.io connection
+    const socket = io();
+  
+    // Display room code
+    document.getElementById("room-code").textContent = roomCode;
+  
+    // Listen for current turn updates from server
+    socket.on("update-turn", (data) => {
+      console.log("Received update-turn event:", data);
+      currentPlayerIndex = data.currentPlayerIndex;
+      hasSubmittedClue = false; // Always reset on server turn broadcast
+      updateTurnDisplay();
+    });
+  
+    // Listen for new player joining
+    socket.on("player-joined", async ({ username }) => {
+      console.log(`username: ${username}`);
+  
+      socket.on('startDiscussion', () => {
+          openChatBtn.click()
+          startDiscussionTime();
+      })
+  
+  
+      try {
+        const response = await fetch(`/api/game/get-room?code=${roomCode}`);
+        const data = await response.json();
+        room = data.room;
+      } catch (error) {
+        console.error("Error fetching room data:", error);
+      }
+  
+      displayPlayers(room.players);
+      updateTurnDisplay();
+    });
+  
+    // Listen for clue submissions
+    socket.on("clueSubmitted", (data) => {
+      const { playerIndex, clue, clueObject } = data;
+  
+      // Add to local clue history
+      if (!room.clues) room.clues = [];
+      room.clues.push(clueObject);
+  
+      // Display clue in speech bubble
+      const playerDiv = document.querySelector(
+        `.player[data-player-index="${playerIndex}"]`
+      );
+      if (playerDiv) {
+        const speechBubble = playerDiv.querySelector(".speech-bubble");
+        speechBubble.textContent = clue;
+        speechBubble.classList.add("has-clue");
+        speechBubble.style.display = "block";
+      }
+    });
 
-    displayPlayers(room.players);
-    updateTurnDisplay();
-  });
-
-  // Listen for clue submissions
-  socket.on("clueSubmitted", (data) => {
-    const { playerIndex, clue, clueObject } = data;
-
-    // Add to local clue history
-    if (!room.clues) room.clues = [];
-    room.clues.push(clueObject);
-
-    // Display clue in speech bubble
-    const playerDiv = document.querySelector(
-      `.player[data-player-index="${playerIndex}"]`
-    );
-    if (playerDiv) {
-      const speechBubble = playerDiv.querySelector(".speech-bubble");
-      speechBubble.textContent = clue;
-      speechBubble.classList.add("has-clue");
-      speechBubble.style.display = "block";
-    }
-  });
 
   // Use the room data we already have
   try {
@@ -317,7 +247,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         timerDisplay.style.zIndex = '1001';
         document.body.appendChild(timerDisplay);
     
-        let timeRemaining = 60; // 60 seconds
+        let timeRemaining = 5; // 60 seconds
     
         const updateTimer = () => {
             const minutes = Math.floor(timeRemaining / 60);
@@ -337,22 +267,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }, 1000);
     }
-    
-    function startVoting() {
-        console.log("Starting voting phase...");
-        // TODO: Clear clues or other logic
 
-  function createTurnIndicator() {
-    // Create turn indicator if it doesn't exist
-    if (!document.querySelector(".turn-indicator")) {
-      const turnIndicator = document.createElement("div");
-      turnIndicator.className = "turn-indicator";
-      document.body.insertBefore(
-        turnIndicator,
-        document.querySelector(".word-display")
-      );
+    function createTurnIndicator() {
+        // Create turn indicator if it doesn't exist
+        if (!document.querySelector(".turn-indicator")) {
+        const turnIndicator = document.createElement("div");
+        turnIndicator.className = "turn-indicator";
+        document.body.insertBefore(
+            turnIndicator,
+            document.querySelector(".word-display")
+        );
+        }
     }
-  }
 
   function updateTurnDisplay() {
     const turnIndicator = document.querySelector(".turn-indicator");
@@ -397,20 +323,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   ///////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////
 
-  function startDiscussionTime() {
-    // This function will be implemented later
-    console.log("Starting discussion time...");
-
-    // After discussion time is over, start voting
-    setTimeout(() => {
-      startVoting();
-    }, 5000); // Placeholder timeout, will be replaced with actual implementation
-  }
-
   function startVoting() {
     // This function will be implemented later
-    io.to(roomCode).emit("startVoting", {
-      players: rooms[roomCode].players,
+    socket.emit("startVoting", {
+      players: room.players,
+      roomCode: roomCode
     });
     console.log("Starting voting phase...");
     //CLEAR THE CLUES
@@ -788,7 +705,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
 
-            // Also submit clue when Enter key is pressed in the input field
-        
+            // Also submit clue when Enter key is pressed in the input field   
     });
 });
+
