@@ -3,7 +3,6 @@ const path = require('path')
 const router = express.Router();
 const generateCode = require('../utils/create-game-code');
 const getRandomWordPair = require('../utils/get-word-pair');
-const { hostname } = require('os');
 
 
 const rooms = {}; // In-memory store for now
@@ -16,12 +15,10 @@ router.post('/create-room', async (req, res) => {
   const code = generateCode();
   const wordPair = await getRandomWordPair();
   const data = req.body; 
-  host = data.host
   rooms[code] = {
     players: [],
     createdAt: new Date(),
     wordPair: wordPair,
-    hostname : host,
     clues : [],
     currentPlayerIndex:0, 
     chat : []
@@ -66,6 +63,7 @@ router.get('/lobby', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/lobby.html'));
 });
 
+
 router.get('/get-chat', (req,res) => {
   const { code } = req.query;
   if (!rooms[code]) {
@@ -73,6 +71,18 @@ router.get('/get-chat', (req,res) => {
   }
 
   res.status(200).json({chat: rooms[code].chat});
+  
+  
+router.get('/players', (req, res) => {
+  const code = req.query.code;
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+  res.status(200).json(rooms[code].players);
+});
+
+router.get('/voting-round', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/voting-round.html'));
 });
 
 module.exports = { router, rooms };
