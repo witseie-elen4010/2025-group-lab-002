@@ -3,22 +3,17 @@ let socket;
 document.addEventListener('DOMContentLoaded', () => {
   const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Guest' };
   document.getElementById('username').textContent = user.username;
-
+  let roomCode ; 
   const createRoomButton = document.getElementById('create-room-button');
   const roomCodeContainer = document.getElementById('room-code-container');
   const roomCodeElement = document.getElementById('room-code');
-  const wordPairContainer = document.getElementById('word-pair-container');
-  const civilianWordElement = document.getElementById('civilian-word');
-  const undercoverWordElement = document.getElementById('undercover-word');
 
   const joinGameButton = document.getElementById('join-game-button');
   const joinGameContainer = document.getElementById('join-game-container');
   const joinCodeInput = document.getElementById('join-code');
   const submitJoinButton = document.getElementById('submit-join');
+  const cancelJoinButton = document.getElementById('cancel-join');
 
-  document.getElementById('go-to-voting').addEventListener('click', () => {
-    window.location.href = 'voting-round';
-  });
   
   const logoutButton = document.getElementById('logout-button');
 
@@ -34,12 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (res.ok) {
         sessionStorage.setItem('roomCode', data.code);
-        roomCodeElement.textContent = data.code;
+        roomCodeElement.textContent = data.code; 
         roomCodeContainer.classList.remove('d-none');
-
-        civilianWordElement.textContent = data.rooms[data.code].wordPair.civilian_word;
-        undercoverWordElement.textContent = data.rooms[data.code].wordPair.undercover_word;
-        wordPairContainer.classList.remove('d-none');
 
         socket = io();
         socket.on('connect', async () => {
@@ -54,9 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Handle "Join Game" button click
   joinGameButton.addEventListener('click', () => {
+    const isVisible = !joinGameContainer.classList.contains('d-none');
     joinGameContainer.classList.toggle('d-none');
+
+    // Disable both buttons when joining interface is open
+    createRoomButton.disabled = !isVisible;
+    joinGameButton.disabled = !isVisible;
   });
 
   // Handle join room (HTTP + socket)
@@ -74,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (res.ok) {
         sessionStorage.setItem('roomCode', code);
-        document.getElementById('go-to-voting').classList.remove('d-none');
         alert(`Successfully joined room: ${code}`);
 
         socket = io();
@@ -94,9 +88,35 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error joining room:', err);
     }
   });
+
+  cancelJoinButton.addEventListener('click', () => {
+    const isVisible = joinGameContainer.classList.contains('d-none');
+    joinGameContainer.classList.toggle('d-none');
+
+    // Disable both buttons when joining interface is open
+    createRoomButton.disabled = isVisible;
+    joinGameButton.disabled = isVisible; 
+  }); 
+
+  roomCodeElement.addEventListener("click", () => {
+    const code = sessionStorage.getItem('roomCode'); 
+
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        roomCodeElement.textContent = "Copied!";
+        setTimeout(() => {
+          roomCodeElement.textContent = code;
+        }, 1000);
+      })
+      .catch(err => {
+        console.error("Failed to copy!", err);
+      });
+  });
+
+
   // Logout
   logoutButton.addEventListener('click', () => {
     sessionStorage.removeItem('loggedInUser');
-    window.location.href = '/api/users/login';
+    window.location.href = '/api/users/landing';
   });
 });

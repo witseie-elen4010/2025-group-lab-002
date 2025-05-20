@@ -73,6 +73,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
+    roomCodeDisplay.addEventListener("click", () => {
+        const code = sessionStorage.getItem('roomCode'); 
+
+        navigator.clipboard.writeText(code)
+        .then(() => {
+            roomCodeDisplay.textContent = "Copied!";
+            setTimeout(() => {
+            roomCodeDisplay.textContent = code;
+            }, 1000);
+        })
+        .catch(err => {
+            console.error("Failed to copy!", err);
+        });
+    });
+
     socket.on('start-game', () => {
         window.location.href = `/api/game/play?code=${roomCode}`;
     });

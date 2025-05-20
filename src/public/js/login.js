@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
           sessionStorage.setItem('loggedInUser', JSON.stringify(data.user));
           alert('Login successful! Redirecting to landing page...');
-          window.location.href = 'landing';
+          window.location.href = '../game/join';
         } else {
           loginError.style.display = 'block';
           loginError.textContent = data.message;
