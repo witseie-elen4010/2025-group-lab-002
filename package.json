@@ -13,10 +13,11 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "jest",
+    "test": "jest --coverage",
     "supertest": "^7.1.0"
   },
   "devDependencies": {
+    "coveralls": "^3.1.1",
     "jest": "^29.7.0",
     "supertest": "^7.1.1"
   }

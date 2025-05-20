@@ -56,3 +56,7 @@
 **Note:**  
 - Ensure your PostgreSQL user has sufficient privileges.
 - You may need to specify a username with `-U your_username` and host with `-h your_host` if different from defaults.
+
+
+[![Coverage Status](https://coveralls.io/repos/github/YOUR_USERNAME/Suspect404/badge.svg?branch=start-game)](https://coveralls.io/github/YOUR_USERNAME/Suspect404?branch=start-game)
+
