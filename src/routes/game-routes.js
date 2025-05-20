@@ -8,7 +8,7 @@ const getRandomWordPair = require('../utils/get-word-pair');
 const rooms = {}; // In-memory store for now
 
 router.get('/join', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/create-game.html'));
+    res.sendFile(path.join(__dirname, '../public/game/create-game.html'));
   });
 
 router.post('/create-room', async (req, res) => {
@@ -21,7 +21,9 @@ router.post('/create-room', async (req, res) => {
     wordPair: wordPair,
     clues : [],
     currentPlayerIndex:0, 
-    chat : []
+    chat : [],
+    hasSubmittedClue: false,
+    code: code
   };
   res.status(201).json({ code, rooms });
 });
@@ -43,10 +45,10 @@ router.get('/play', (req, res) => {
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
   }
-  res.sendFile(path.join(__dirname, '../public/play.html'));
+  res.sendFile(path.join(__dirname, '../public/game/play.html'));
 });
 
-router.get('/get-room', (req, res) => {
+router.get('/get-room', async (req, res) => {
   const { code } = req.query;
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
@@ -60,7 +62,7 @@ router.get('/lobby', (req, res) => {
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
   }
-  res.sendFile(path.join(__dirname, '../public/lobby.html'));
+  res.sendFile(path.join(__dirname, '../public/game/lobby.html'));
 });
 
 
@@ -82,7 +84,7 @@ router.get('/players', (req, res) => {
 });
 
 router.get('/voting-round', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/voting-round.html'));
+  res.sendFile(path.join(__dirname, '../public/game/voting-round.html'));
 });
 
 module.exports = { router, rooms };

@@ -6,7 +6,7 @@ function setupGameSocket(io) {
 
     socket.on('join-room', ({ code, username }) => {
       socket.join(code);
-      io.to(code).emit('player-joined', { username });
+      io.to(code).emit('player-joined', { room: rooms[code], username });
       io.to(code).emit('player-joined-lobby', { roomData: rooms[code] });
       console.log(`${username} joined room ${code}`);
     });
@@ -107,6 +107,7 @@ function setupGameSocket(io) {
       // Advance turn
       room.currentPlayerIndex =
         (room.currentPlayerIndex + 1) % room.players.length;
+        room.hasSubmittedClue = false;
 
       // If all clues are in, start voting!
 
@@ -116,9 +117,7 @@ function setupGameSocket(io) {
         io.to(roomCode).emit('startDiscussion');
       } else {
         // Otherwise, update turn as usual
-        io.to(roomCode).emit("update-turn", {
-          currentPlayerIndex: room.currentPlayerIndex,
-        });
+        io.to(roomCode).emit("update-turn", (room));
       }
 
       // // Notify all clients of the new turn

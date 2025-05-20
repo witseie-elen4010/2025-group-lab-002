@@ -76,9 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Connected to socket server with ID:', socket.id);
         });
 
-        socket.on('user-joined', ({ username }) => {
-          console.log(`${username} joined the room.`);
-        });
 
         window.location.href = `/api/game/lobby?code=${code}`;
       } else {

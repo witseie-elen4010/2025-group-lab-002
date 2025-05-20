@@ -1,3 +1,7 @@
+import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussionTime} from "../utils/game-utils.js";
+import { setUpSockets } from "../utils/socket-handler.js";
+
+
 class Player {
     constructor(username, role) {
       this.username = username;
@@ -86,6 +90,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Get the room code from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
+    let room 
+    let currentUsername
     try {
       const response = await fetch(`/api/game/get-room?code=${roomCode}`);
       const data = await response.json();
@@ -99,7 +105,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     let currentPlayerIndex = 0;
     let players = room.players;
     let wordPair = room.wordPair;
-    let hasSubmittedClue = false; // Track if current player has submitted a clue
   
     // DOM elements
     const clueInputContainer = document.getElementById("clue-input-container");
@@ -107,40 +112,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     const playerWordElement = document.getElementById("player-word");
     const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
     const openChatBtn = document.getElementById("open-chat-btn");
-  
-    // Initialize Socket.io connection
+
     const socket = io();
+    setUpSockets(socket);
+    // Initialize Socket.io connection
+    
   
     // Display room code
     document.getElementById("room-code").textContent = roomCode;
   
-    // Listen for current turn updates from server
-    socket.on("update-turn", (data) => {
-      console.log("Received update-turn event:", data);
-      currentPlayerIndex = data.currentPlayerIndex;
-      hasSubmittedClue = false; // Always reset on server turn broadcast
-      updateTurnDisplay();
-    });
-  
-    // Listen for new player joining
-    socket.on("player-joined", async ({ username }) => {
-      console.log(`username: ${username}`);
-    
-      try {
-        const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-        const data = await response.json();
-        room = data.room;
-      } catch (error) {
-        console.error("Error fetching room data:", error);
-      }
-  
-      displayPlayers(room.players);
-      updateTurnDisplay();
-    });
+
 
     socket.on('startDiscussion', () => {
         openChatBtn.click()
-        startDiscussionTime();
+        startDiscussionTime(room);
     })
   
     // Listen for clue submissions
@@ -167,8 +152,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Use the room data we already have
   try {
     // We already have room from: let room = rooms[roomCode]
-    players = room.players;
-    displayPlayers(players);
+    displayPlayers(room);
 
     // Get current user info from localStorage
     const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
@@ -184,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Initialize turn system
     createTurnIndicator();
-    updateTurnDisplay();
+    updateTurnDisplay(room);
 
     // Let the server know we're ready
     socket.emit("join-room", { code: roomCode, username: currentUsername });
@@ -193,144 +177,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     playerWordElement.textContent = "Error loading game data";
   }
 
-  function displayPlayers(players) {
-    const container = document.getElementById("players-container");
-    container.innerHTML = ""; // Clear container
-    const colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33"]; // Different colors for each player
-
-    for (let index = 0; index < players.length; index++) {
-      const player = players[index];
-      const playerDiv = document.createElement("div");
-      playerDiv.className = "player";
-      playerDiv.dataset.playerIndex = index;
-
-      const circle = document.createElement("div");
-      circle.className = "player-circle";
-      circle.style.backgroundColor = colors[index % colors.length];
-
-      const nameDiv = document.createElement("div");
-      nameDiv.className = "player-name";
-      nameDiv.textContent = player.username;
-
-      const speechBubble = document.createElement("div");
-      speechBubble.className = "speech-bubble";
-      speechBubble.style.display = "none"; // Hide speech bubble by default
-
-      playerDiv.appendChild(circle);
-      playerDiv.appendChild(nameDiv);
-      playerDiv.appendChild(speechBubble);
-      container.appendChild(playerDiv);
-    }
-  }
-
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    function startDiscussionTime() {
-        console.log("Starting discussion time...");
-        clueInputContainer.style.display = 'none';
-        submitClueBtn.style.display = 'none';
     
-        // Create timer display
-        const timerDisplay = document.createElement('div');
-        timerDisplay.id = 'discussion-timer';
-        timerDisplay.style.position = 'fixed';
-        timerDisplay.style.top = '10px';
-        timerDisplay.style.right = '10px';
-        timerDisplay.style.backgroundColor = '#333';
-        timerDisplay.style.color = 'white';
-        timerDisplay.style.padding = '10px 15px';
-        timerDisplay.style.borderRadius = '8px';
-        timerDisplay.style.fontSize = '18px';
-        timerDisplay.style.zIndex = '1001';
-        document.body.appendChild(timerDisplay);
-    
-        let timeRemaining = 5; // 60 seconds
-    
-        const updateTimer = () => {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            timerDisplay.textContent = `Discussion: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        };
-    
-        updateTimer(); // Initial display
-        const countdown = setInterval(() => {
-            timeRemaining--;
-            updateTimer();
-    
-            if (timeRemaining <= 0) {
-                clearInterval(countdown);
-                document.body.removeChild(timerDisplay); // Remove the timer from screen
-                startVoting(); // Move to voting phase
-            }
-        }, 1000);
-    }
-
-    function createTurnIndicator() {
-        // Create turn indicator if it doesn't exist
-        if (!document.querySelector(".turn-indicator")) {
-        const turnIndicator = document.createElement("div");
-        turnIndicator.className = "turn-indicator";
-        document.body.insertBefore(
-            turnIndicator,
-            document.querySelector(".word-display")
-        );
-        }
-    }
-
-  function updateTurnDisplay() {
-    const turnIndicator = document.querySelector(".turn-indicator");
-    console.log(`CURRENT PLAYER INDEX: ${currentPlayerIndex}`);
-    const currentPlayer = players[currentPlayerIndex];
-
-    if (!currentPlayer) return; // Guard against undefined players
-
-    turnIndicator.textContent = `${currentPlayer.username}'s Turn`;
-
-    // Highlight current player
-    document.querySelectorAll(".player").forEach((playerDiv, index) => {
-      if (index === currentPlayerIndex) {
-        playerDiv.classList.add("current-player");
-      } else {
-        playerDiv.classList.remove("current-player");
-      }
-    });
-
-    console.log(`current player: ${currentPlayer.playerID}`);
-
-    // Show or hide clue input container based on turn and submission status
-    if (currentPlayer.username === currentUsername && !hasSubmittedClue) {
-      // Show clue input only if it's the current user's turn and they haven't submitted a clue yet
-      clueInputContainer.style.display = "block";
-      document.getElementById("clue-input").disabled = false;
-      submitClueBtn.disabled = false;
-      // Auto-focus the input field when it's the player's turn
-      setTimeout(() => {
-        document.getElementById("clue-input").focus();
-      }, 300);
-    } else {
-      // Hide clue input if it's not their turn or they've already submitted
-      clueInputContainer.style.display = "none";
-      document.getElementById("clue-input").disabled = true;
-      submitClueBtn.disabled = true;
-
-    }
-  }
-
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////
-
-  function startVoting() {
-    // This function will be implemented later
-    socket.emit("startVoting", {
-      players: room.players,
-      roomCode: roomCode
-    });
-    console.log("Starting voting phase...");
-    //CLEAR THE CLUES
-  }
 
   // Listen for startVoting event from server
   socket.on("startVoting", ({ players: votingPlayers }) => {
@@ -479,8 +326,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const clueInput = document.getElementById("clue-input");
     const clue = clueInput.value.trim();
 
-    if (clue && !hasSubmittedClue) {
-      hasSubmittedClue = true;
+    if (clue && !room.hasSubmittedClue) {
+      room.hasSubmittedClue = true;
 
       // Display the clue in the current player's speech bubble
       const currentPlayerDiv = document.querySelector(
@@ -521,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   document
     .getElementById("clue-input")
     .addEventListener("keypress", function (e) {
-      if (e.key === "Enter" && !hasSubmittedClue) {
+      if (e.key === "Enter" && !room.hasSubmittedClue) {
         submitClueBtn.click();
       }
     });
