@@ -5,7 +5,7 @@ const { Server } = require("socket.io");
 const Client = require("socket.io-client");
 const http = require("http");
 const setupGameSocket = require("../src/sockets/game-socket");
-const { Player, VotingRound } = require("../src/public/js/voting-round");
+const { Player, VotingRound } = require("../src/public/js/game/voting-round");
 
 describe('VotingRound Class Logic', () => {
     let players;

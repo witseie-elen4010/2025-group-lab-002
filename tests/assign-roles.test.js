@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load the JS file as a string
-const fileContent = fs.readFileSync(path.resolve(__dirname, '../src/public/assign-roles.js'), 'utf-8');
+const fileContent = fs.readFileSync(path.resolve(__dirname, '../src/public/js/assign-roles.js'), 'utf-8');
 
 // Setup JSDOM and evaluate the JS file in the window context
 const dom = new JSDOM(`<!DOCTYPE html><body></body>`, { runScripts: "outside-only" });

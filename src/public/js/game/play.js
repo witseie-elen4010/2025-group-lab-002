@@ -7,7 +7,7 @@ class Player {
       this.username = username;
       this.role = role;
     }
-  }
+}
   
 
 document.addEventListener('DOMContentLoaded', async function () {
