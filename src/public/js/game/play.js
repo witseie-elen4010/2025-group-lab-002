@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       username: "Guest",
     };
     currentUsername = user.username;
-
     // Store word pair
     if (room.wordPair) {
       wordPair = room.wordPair;

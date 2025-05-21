@@ -76,13 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Connected to socket server with ID:', socket.id);
         });
 
-
         window.location.href = `/api/game/lobby?code=${code}`;
+      } else if (res.status === 400) {
+        alert(data.message || 'Game has already started')
       } else {
         alert(data.message || 'Error joining room.');
       }
     } catch (err) {
       console.error('Error joining room:', err);
+    } finally {
+      joinCodeInput.value = ''; // Clear the input field after attempt
+    }
+  });
+ 
+  joinCodeInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission if inside a form
+      submitJoinButton.click();
     }
   });
 

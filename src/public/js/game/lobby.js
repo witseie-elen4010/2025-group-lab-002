@@ -1,3 +1,5 @@
+import { assignPlayerRolesAndOrder } from "../utils/assign-roles-order.js";
+
 document.addEventListener('DOMContentLoaded', async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('code');
@@ -45,18 +47,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function updateStartButtonVisibility() {
-        if (players.length === 4) {
+        if (players.length >= 3) {
             startGameButton.style.display = 'block';
             startGameButton.disabled = false;
         } else {
-            startGameButton.style.display = 'none'; // or keep it `block` but set `.disabled = true` if you prefer
+            startGameButton.style.display = 'none';
             startGameButton.disabled = true;
         }
     }
 
     startGameButton.addEventListener('click', () => {
-        if (players.length === 4) {
-            socket.emit('start-game', { code: roomCode });
+        if (players.length >= 3) {
+            room.players = assignPlayerRolesAndOrder(room.players);
+            room.hasGameStarted = true;
+            socket.emit('start-game', { room });
         }
     });
 
@@ -79,5 +83,4 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = `/api/game/play?code=${roomCode}`;
     });
 
-    await fetchRoomData();
 });
