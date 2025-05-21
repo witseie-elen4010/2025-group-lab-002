@@ -20,13 +20,13 @@ app.use('/api/votes', voteRouter)
 
 // 404 Handler for any undefined routes
 app.use((req, res, next) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).sendFile(path.join(__dirname, './public/not-found.html'));
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
-  res.status(500).json({ message: 'Something broke!' });
+  res.status(500).sendFile(path.join(__dirname, './public/server-error.html'));
 });
 
 module.exports = app;
