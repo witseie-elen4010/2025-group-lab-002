@@ -140,10 +140,7 @@ export function startDiscussionTime(room) {
 function startVoting(room) {
     // This function will be implemented later
     const socket = io();
-    socket.emit("startVoting", {
-      players: room.players,
-      roomCode: room.code
-    });
+    socket.emit("startVoting", (room));
     console.log("Starting voting phase...");
     //CLEAR THE CLUES
   }

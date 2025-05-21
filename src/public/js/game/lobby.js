@@ -20,19 +20,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     socket.emit('join-room', { code: roomCode, username: currentUsername });
 
-    async function fetchRoomData() {
-        try {
-            const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-            const data = await response.json();
-            room = data.room;
-            players = room.players || [];
-            isHost = room.host === currentUsername;
-            renderPlayerList();
-            updateStartButtonVisibility();
-        } catch (error) {
-            console.error('Error fetching room data:', error);
-        }
-    }
 
     socket.on('player-joined-lobby', ({ roomData }) => {
         room = roomData;
