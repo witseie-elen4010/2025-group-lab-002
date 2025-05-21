@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | Suspect404</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #5959ba;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #444;
+    }
+    .btn-lg {
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+    .quirky {
+      font-style: italic;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    .btn-custom {
+      background-color: #5959ba;
+      border-color: #5959ba;
+      color: white;
+    }
+
+    .btn-custom:hover, .btn-custom:focus {
+      background-color: #598eba;
+      border-color: #598eba;
+      color: white;
+    }
+  </style>
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
+
+  <div class="container text-center p-5 bg-white shadow rounded" style="max-width: 500px;">
+    <h1 class="title">Admin Panel</h1>
+    <p class="subtitle">Manage the chaos, control the deception 🛠️</p>
+    <p class="quirky">Only for the brave and trusted...</p>
+
+    <div class="d-grid gap-3 mt-4">
+      <button class="btn btn-custom btn-lg" id="logs-button">📜 View Logs</button>
+      <button class="btn btn-custom btn-lg" id="users-button">👥 Manage Users</button>
+      <button class="btn btn-custom btn-lg" id="settings-button">⚙️ Game Settings</button>
+      <button class="btn btn-outline-secondary btn-lg" id="back-button">↩️ Back to Lobby</button>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

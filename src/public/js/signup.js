@@ -1,32 +1,51 @@
-// public/js/signup.js
-const signupForm = document.getElementById('signup-form');
-const signupError = document.getElementById('signup-error');
+document.addEventListener('DOMContentLoaded', () => {
+  const signupForm = document.getElementById('signup-form');
+  const signupError = document.getElementById('signup-error');
 
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const username = document.getElementById('username').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-  try {
-    const response = await fetch('/api/users/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
-    });
+    try {
+      // First, attempt to sign up
+      const signupResponse = await fetch('/api/users/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
 
-    const data = await response.json();
+      const signupData = await signupResponse.json();
 
-    if (response.ok) {
-      alert('Signup successful! Redirecting to login...');
-      window.location.href = 'login';
-    } else {
+      if (!signupResponse.ok) {
+        signupError.style.display = 'block';
+        signupError.textContent = signupData.message || 'Signup failed.';
+        return;
+      }
+
+      // Then, auto-login after successful signup
+      const loginResponse = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (loginResponse.ok) {
+        sessionStorage.setItem('loggedInUser', JSON.stringify(loginData.user));
+        alert('Signup and login successful! Redirecting to landing page...');
+        window.location.href = '../game/join';
+      } else {
+        signupError.style.display = 'block';
+        signupError.textContent = loginData.message || 'Login after signup failed.';
+      }
+
+    } catch (err) {
       signupError.style.display = 'block';
-      signupError.textContent = data.message;
+      signupError.textContent = 'An error occurred. Please try again.';
     }
-  } catch (err) {
-    signupError.style.display = 'block';
-    signupError.textContent = 'An error occurred. Please try again.';
-  }
+  });
 });

@@ -81,19 +81,29 @@ router.post('/login', async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
+    if (user.username === "admin"){
+      user.role = "admin"
+    }else{
+      user.role = "player"
+    }
     console.log('Login Successful', user)
     res.json({ 
       message: 'Login successful',
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     })
   } catch (error) {
     console.error('Error logging in:', error)
     res.status(500).json({ message: 'Error logging in', error: error.message })
   }
+})
+
+router.get('/admin', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin.html'))
 })
 
 router.get('/sign-up', (req, res) => {
@@ -126,14 +136,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.get('/signup-login', (req, res) => {
-  res.json({ message: 'Login/SignUp Page' })
-})
 
-// Signup and Login combined route (example placeholder)
-router.post('/signup-login', (req, res) => {
-  // Handle signup and login in one go (not common, but possible)
-  res.json({ message: 'Signup and login handled together' })
-})
+
 
 module.exports = { router }

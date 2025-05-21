@@ -72,6 +72,27 @@
     #start-game-btn:hover {
       background-color: #3636a6;
     }
+
+    .room-code-box {
+      display: inline-block;
+      padding: 12px 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      user-select: none;
+    }
+
+    .room-code-box:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .room-code-box:active {
+      transform: scale(0.97);
+    }
   </style>
 </head>
 
@@ -101,7 +122,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/lobby.js"></script>
+  <script src="/js/game/lobby.js"></script>
 </body>
 
 </html>

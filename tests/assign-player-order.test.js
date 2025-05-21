@@ -4,7 +4,7 @@ const { JSDOM } = require('jsdom');
 
 // Load the JS file as a string
 const fileContent = fs.readFileSync(
-  path.resolve(__dirname, '../src/public/assign-player-order.js'),
+  path.resolve(__dirname, '../src/public/js/assign-player-order.js'),
   'utf-8'
 );
 

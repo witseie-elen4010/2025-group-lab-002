@@ -20,19 +20,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     socket.emit('join-room', { code: roomCode, username: currentUsername });
 
-    async function fetchRoomData() {
-        try {
-            const response = await fetch(`/api/game/get-room?code=${roomCode}`);
-            const data = await response.json();
-            room = data.room;
-            players = room.players || [];
-            isHost = room.host === currentUsername;
-            renderPlayerList();
-            updateStartButtonVisibility();
-        } catch (error) {
-            console.error('Error fetching room data:', error);
-        }
-    }
 
     socket.on('player-joined-lobby', ({ roomData }) => {
         room = roomData;
@@ -71,6 +58,21 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (players.length === 4) {
             socket.emit('start-game', { code: roomCode });
         }
+    });
+
+    roomCodeDisplay.addEventListener("click", () => {
+        const code = sessionStorage.getItem('roomCode'); 
+
+        navigator.clipboard.writeText(code)
+        .then(() => {
+            roomCodeDisplay.textContent = "Copied!";
+            setTimeout(() => {
+            roomCodeDisplay.textContent = code;
+            }, 1000);
+        })
+        .catch(err => {
+            console.error("Failed to copy!", err);
+        });
     });
 
     socket.on('start-game', () => {

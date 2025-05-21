@@ -6,7 +6,7 @@ function setupGameSocket(io) {
 
     socket.on('join-room', ({ code, username }) => {
       socket.join(code);
-      io.to(code).emit('player-joined', { username });
+      io.to(code).emit('player-joined', { room: rooms[code], username });
       io.to(code).emit('player-joined-lobby', { roomData: rooms[code] });
       console.log(`${username} joined room ${code}`);
     });
@@ -98,27 +98,25 @@ function setupGameSocket(io) {
       console.log(`${username} joined your room ${code}.`);
     });
 
-    socket.on('submitClue', ({ roomCode, username, playerIndex, clue }) => {
+    socket.on('submitClue',  ({ roomCode, username, clue }) => {
       const room = rooms[roomCode]; // however you're storing room state
-      room.clues.push({ username, clue });
-
-      io.to(roomCode).emit("clueSubmitted", { playerIndex, clue });
-
+      room.clues.push({ username, clue }); 
+      io.to(roomCode).emit("clueSubmitted", { serverRoom: room });
       // Advance turn
       room.currentPlayerIndex =
         (room.currentPlayerIndex + 1) % room.players.length;
+        room.hasSubmittedClue = false;
 
+  
       // If all clues are in, start voting!
 
       
       if (room.currentPlayerIndex === 0) {
         // You can emit a new event like 'start-discussion'
-        io.to(roomCode).emit('startDiscussion');
+        io.to(roomCode).emit('startDiscussion', (room));
       } else {
         // Otherwise, update turn as usual
-        io.to(roomCode).emit("update-turn", {
-          currentPlayerIndex: room.currentPlayerIndex,
-        });
+        io.to(roomCode).emit("update-turn", (room));
       }
 
       // // Notify all clients of the new turn
@@ -146,8 +144,8 @@ function setupGameSocket(io) {
 
   });
 
-  socket.on('startVoting', ({ players, roomCode }) => {
-    io.to(roomCode).emit('startVoting', { players });
+  socket.on('startVoting', (room) => {
+    io.to(room.code).emit('startVoting', (room));
   });
 
     socket.on('disconnect', () => {

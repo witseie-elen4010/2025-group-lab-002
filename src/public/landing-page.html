@@ -1,40 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Suspect404</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #5959ba;
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      color: #333;
+    }
+    .btn-lg {
+      padding: 12px 20px;
+      font-size: 1.1rem;
+    }
+    .quirky {
+      font-style: italic;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    #login-button.btn-primary {
+        background-color: #5959ba; /* medium purple */
+        border-color: #5959ba;
+        color: #fff;
+    }
+
+    #login-button.btn-primary:hover,
+    #login-button.btn-primary:focus {
+        background-color: #598eba; /* hover blue */
+        border-color: #598eba;
+        color: #fff;
+    }
+
+    #signup-button.btn-success {
+        background-color: #5959ba; /* lighter medium purple */
+        border-color: #5959ba;
+        color: #fff;
+    }
+    #signup-button.btn-success:hover,
+    #signup-button.btn-success:focus {
+        background-color: #598eba; /* hover blue */
+        border-color: #598eba;
+        color: #fff;
+    }
+
+    #guest-button.btn-outline-secondary {
+        color: #9a8fcc; /* lightest purple */
+        border-color: #9a8fcc;
+    }
+    #guest-button.btn-outline-secondary:hover,
+    #guest-button.btn-outline-secondary:focus {
+        background-color: #598eba; /* hover blue */
+        color: #fff;
+        border-color: #598eba;
+    }
+  </style>
 </head>
 <body class="d-flex justify-content-center align-items-center vh-100 bg-light">
-    <div class="container text-center p-4 bg-white shadow rounded">
-        <h1 class="text-dark">Welcome, <span id="username">User</span>!</h1>
-        <p class="text-secondary">You have successfully logged in.</p>
-        <div class="d-flex justify-content-center gap-3 mt-3">
-            <button id="join-game-button" class="btn btn-primary">Join Game</button>
-            <button id="logout-button" class="btn btn-danger">Log Out</button>
-        </div>
+
+  <div class="container text-center p-5 bg-white shadow rounded" style="max-width: 480px;">
+    <h1 class="title">Welcome to Suspect404</h1>
+    <p class="subtitle">Where the truth is optional and trust is overrated 👀</p>
+    <p class="quirky">Choose your fate wisely...</p>
+
+    <div class="d-grid gap-3 mt-4">
+      <button id="login-button" class="btn btn-primary btn-lg">🔐 Log In</button>
+      <button id="signup-button" class="btn btn-success btn-lg">📝 Sign Up</button>
+      <button id="guest-button" class="btn btn-outline-secondary btn-lg">🎭 Play as Guest</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Fetch user info 
-            const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Guest' };
+  </div>
 
-            // Display the username
-            document.getElementById('username').textContent = user.username;
+  <script>
+    document.getElementById('login-button').addEventListener('click', () => {
+      window.location.href = './login';
+    });
 
-            // Handle logout
-            document.getElementById('logout-button').addEventListener('click', () => {
-                sessionStorage.removeItem('loggedInUser');
-                window.location.href = 'login';
-            });
+    document.getElementById('signup-button').addEventListener('click', () => {
+      window.location.href = './sign-up';
+    });
 
-            // Handle join game redirection
-            document.getElementById('join-game-button').addEventListener('click', () => {
-                window.location.href = '../game/join'; // Change this to your actual join game route
-            });
-        });
-    </script>
+    document.getElementById('guest-button').addEventListener('click', () => {
+      sessionStorage.setItem('loggedInUser', JSON.stringify({ username: 'Guest' }));
+      window.location.href = '../game/join';
+    });
+  </script>
+
 </body>
 </html>
