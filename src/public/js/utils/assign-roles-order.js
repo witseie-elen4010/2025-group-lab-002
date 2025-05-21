@@ -11,22 +11,19 @@ function shuffle(array) {
   return array;
 }
 
-// Shuffle players and display the order in the HTML
-function determinePlayerOrder(players) {
-  // Shuffle all players randomly
-  const shuffledPlayers = shuffle([...players]);
-  
-  return shuffledPlayers;
-}
-
 export function assignPlayerRolesAndOrder(players) {
   if (players.length < 3) {
     throw new Error('Need at least 3 players to start the game');
   }
 
   // Create roles
-  const roles = ['mr.white', 'undercover'];
-  for (let i = 2; i < players.length; i++) {
+  const roles = ['undercover'];
+  if (players.length > 3) {
+    roles.push('mr.white');
+  }
+
+  // Fill the rest with civilians
+  while (roles.length < players.length) {
     roles.push('civilian');
   }
 
