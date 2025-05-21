@@ -24,7 +24,8 @@ router.post('/create-room', async (req, res) => {
     chat : [],
     hasSubmittedClue: false,
     code: code,
-    hasGameStarted: false
+    hasGameStarted: false,
+    isGameFull: false
   };
   res.status(201).json({ code, rooms });
 });
@@ -37,9 +38,14 @@ router.post('/join-room', (req, res) => {
   if (rooms[code].hasGameStarted) {
     return res.status(400).json({ message: 'Game has already started' });
   }
+  if (rooms[code].isGameFull) {
+    return res.status(400).json({ message: 'Game is full' });
+  }
   
-  const playerID = rooms[code].players.length ;
-
+  const playerID = rooms[code].players.length;
+  if (rooms[code].players.length === 9) {
+    rooms[code].isGameFull = true;
+  }
 
   rooms[code].players.push({ username, playerID });
   res.status(200).json({ message: 'Joined room', players: rooms[code].players, code: code });
