@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       const response = await fetch(`/api/game/get-room?code=${roomCode}`);
       const data = await response.json();
       room = data.room;
+      console.log(`players role: ${room.players[0].playerRole}`);
     } catch (error) {
       console.error("Error fetching room data:", error);
     }
@@ -55,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async function () {
       username: "Guest",
     };
     currentUsername = user.username;
-
     // Store word pair
     if (room.wordPair) {
       wordPair = room.wordPair;

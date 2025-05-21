@@ -88,6 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
       joinCodeInput.value = ''; // Clear the input field after attempt
     }
   });
+ 
+  joinCodeInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission if inside a form
+      submitJoinButton.click();
+    }
+  });
 
   cancelJoinButton.addEventListener('click', () => {
     const isVisible = joinGameContainer.classList.contains('d-none');

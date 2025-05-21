@@ -84,9 +84,10 @@ function setupGameSocket(io) {
       }
     });
 
-    socket.on('start-game', ({ code }) => {
-      io.to(code).emit('start-game'); // Only emit this once, not nested
-      console.log(`Game started in room ${code}`);
+    socket.on('start-game', ({ room }) => {
+      rooms[room.code] = room; 
+      io.to(room.code).emit('start-game'); // Only emit this once, not nested
+      console.log(`Game started in room ${room.code}`);
     });
 
     socket.on('room-created', ({ code, username }) => {
