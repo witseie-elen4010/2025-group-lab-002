@@ -23,7 +23,8 @@ router.post('/create-room', async (req, res) => {
     currentPlayerIndex:0, 
     chat : [],
     hasSubmittedClue: false,
-    code: code
+    code: code,
+    hasGameStarted: false
   };
   res.status(201).json({ code, rooms });
 });
@@ -33,6 +34,10 @@ router.post('/join-room', (req, res) => {
   if (!rooms[code]) {
     return res.status(404).json({ message: 'Room not found' });
   }
+  if (rooms[code].hasGameStarted) {
+    return res.status(400).json({ message: 'Game has already started' });
+  }
+  
   const playerID = rooms[code].players.length ;
 
 

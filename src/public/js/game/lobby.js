@@ -45,18 +45,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function updateStartButtonVisibility() {
-        if (players.length === 4) {
+        if (players.length >= 3) {
             startGameButton.style.display = 'block';
             startGameButton.disabled = false;
         } else {
-            startGameButton.style.display = 'none'; // or keep it `block` but set `.disabled = true` if you prefer
+            startGameButton.style.display = 'none';
             startGameButton.disabled = true;
         }
     }
 
     startGameButton.addEventListener('click', () => {
-        if (players.length === 4) {
+        if (players.length >= 3) {
             socket.emit('start-game', { code: roomCode });
+            room.hasGameStarted = true;
         }
     });
 
