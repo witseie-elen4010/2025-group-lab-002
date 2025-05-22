@@ -132,7 +132,7 @@ export function startDiscussionTime(room) {
     
             if (timeRemaining <= 0) {
                 clearInterval(countdown);
-                document.body.removeChild(timerDisplay); // Remove the timer from screen
+              document.body.removeChild(timerDisplay); // Remove the timer from screen
                 startVoting(room); // Move to voting phase
             }
         }, 1000);

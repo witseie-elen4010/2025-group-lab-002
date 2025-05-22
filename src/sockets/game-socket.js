@@ -1,67 +1,69 @@
-const { rooms } = require('../routes/game-routes');
+const { rooms } = require("../routes/game-routes");
 
 function setupGameSocket(io) {
-  io.on('connection', (socket) => {
-    console.log('Client connected');
+  io.on("connection", (socket) => {
+    console.log("Client connected");
 
-    socket.on('join-room', ({ code, username }) => {
+    socket.on("join-room", ({ code, username }) => {
       socket.join(code);
-      io.to(code).emit('player-joined', { room: rooms[code], username });
-      io.to(code).emit('player-joined-lobby', { roomData: rooms[code] });
+      io.to(code).emit("player-joined", { room: rooms[code], username });
+      io.to(code).emit("player-joined-lobby", { roomData: rooms[code] });
       console.log(`${username} joined room ${code}`);
     });
 
-    socket.on('start-game', ({ room }) => {
-      rooms[room.code] = room; 
-      rooms[room.code].roundNumber = 1; 
-      io.to(room.code).emit('start-game'); 
-      io.to(room.code).emit('new-round', { roundNumber: 1, room: rooms[room.code] }); // Emit initial round
+    socket.on("start-game", ({ room }) => {
+      rooms[room.code] = room;
+      rooms[room.code].roundNumber = 1;
+      io.to(room.code).emit("start-game");
+      io.to(room.code).emit("new-round", {
+        roundNumber: 1,
+        room: rooms[room.code],
+      }); // Emit initial round
       console.log(`Game started in room ${room.code}`);
     });
 
-    socket.on('room-created', ({ code, username }) => {
+    socket.on("room-created", ({ code, username }) => {
       socket.join(code);
       console.log(`Room ${code} created by ${username}`);
     });
 
-    socket.on('user-joined', ({ username, code }) => {
+    socket.on("user-joined", ({ username, code }) => {
       console.log(`${username} joined your room ${code}.`);
     });
 
-    socket.on('submitClue',  ({ roomCode, username, clue }) => {
+    socket.on("submitClue", ({ roomCode, username, clue }) => {
       const room = rooms[roomCode]; // however you're storing room state
-      room.clues.push({ username, clue }); 
+      room.clues.push({ username, clue });
       io.to(roomCode).emit("clueSubmitted", { serverRoom: room });
       // Advance turn
       room.currentPlayerIndex =
         (room.currentPlayerIndex + 1) % room.players.length;
-        room.hasSubmittedClue = false;
-      
+      room.hasSubmittedClue = false;
+
       if (room.currentPlayerIndex === 0) {
         // You can emit a new event like 'start-discussion'
-        io.to(roomCode).emit('startDiscussion', (room));
+        io.to(roomCode).emit("startDiscussion", room);
       } else {
         // Otherwise, update turn as usual
-        io.to(roomCode).emit("update-turn", (room));
+        io.to(roomCode).emit("update-turn", room);
       }
     });
 
-  socket.on('submitMessage', ({ message, username, code }) => {
-    const room = rooms[code];
-    if (!room) return; // Optional: guard against invalid code
-  
-    room.chat.push({ username, message });
-  
-    io.to(code).emit('newMessage', {
-      username,
-      message
+    socket.on("submitMessage", ({ message, username, code }) => {
+      const room = rooms[code];
+      if (!room) return; // Optional: guard against invalid code
+
+      room.chat.push({ username, message });
+
+      io.to(code).emit("newMessage", {
+        username,
+        message,
+      });
     });
 
-  });
-
-  socket.on('startVoting', (room) => {
-    io.to(room.code).emit('startVoting', (room));
-  });
+    socket.on("startVoting", (room) => {
+      io.to(room.code).emit("startVoting", room);
+    });
 
     socket.on("cast-vote", ({ code, voter, voteFor }) => {
       if (!rooms[code] || !rooms[code].players) return;
@@ -127,32 +129,55 @@ function setupGameSocket(io) {
           rooms[code].players = rooms[code].players.filter(
             (p) => p.username !== eliminatedPlayer.username
           );
-          // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
-          if (rooms[code].currentPlayerIndex > eliminatedIdx) {
-            rooms[code].currentPlayerIndex -= 1;
+
+          //check win condition
+          const civilians = rooms[code].players.filter(
+            (p) => p.playerRole === "civilian"
+          ).length;
+          const impostors = rooms[code].players.filter(
+            (p) => p.playerRole === "undercover" || p.playerRole === "mr.white"
+          ).length;
+
+          let winner = null;
+          if (impostors === 0) {
+            winner = "Civilians";
+          } else if (civilians <= 1) {
+            winner = "Impostors";
           }
-          // If currentPlayerIndex is now out of bounds (e.g. last player was eliminated), reset to 0
-          if (rooms[code].currentPlayerIndex >= rooms[code].players.length) {
+
+          if (winner) {
+            io.to(code).emit("game-over", { winner });
+          } else {
+            // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
+            if (rooms[code].currentPlayerIndex > eliminatedIdx) {
+              rooms[code].currentPlayerIndex -= 1;
+            }
+            // If currentPlayerIndex is now out of bounds (e.g. last player was eliminated), reset to 0
+            if (rooms[code].currentPlayerIndex >= rooms[code].players.length) {
+              rooms[code].currentPlayerIndex = 0;
+            }
+            rooms[code].votes = {};
+            rooms[code].voted = {};
+            // Reset clue submission state for new round
+            rooms[code].hasSubmittedClue = false;
+
+            // Increment round number and reset currentPlayerIndex for new round
+            if (!rooms[code].roundNumber) rooms[code].roundNumber = 1;
+            rooms[code].roundNumber += 1;
             rooms[code].currentPlayerIndex = 0;
+
+            // Emit new round event to all clients
+            io.to(code).emit("new-round", {
+              roundNumber: rooms[code].roundNumber,
+              room: rooms[code],
+            });
           }
-          rooms[code].votes = {};
-          rooms[code].voted = {};
-          // Reset clue submission state for new round
-          rooms[code].hasSubmittedClue = false;
-
-          // Increment round number and reset currentPlayerIndex for new round
-          if (!rooms[code].roundNumber) rooms[code].roundNumber = 1;
-          rooms[code].roundNumber += 1;
-          rooms[code].currentPlayerIndex = 0;
-
-          // Emit new round event to all clients
-          io.to(code).emit('new-round', { roundNumber: rooms[code].roundNumber, room: rooms[code] });
         }
       }
     });
 
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
+    socket.on("disconnect", () => {
+      console.log("Client disconnected");
     });
   });
 }
