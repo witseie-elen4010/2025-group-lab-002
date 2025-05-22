@@ -69,7 +69,20 @@
       transition: background-color 0.3s ease;
     }
 
-    #start-game-btn:hover {
+    #leave-lobby-btn {
+      background-color: #4b4bc0;
+      color: white;
+      font-weight: 600;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+      margin-left: auto;
+    }
+
+    #start-game-btn:hover, #leave-lobby-btn:hover {
       background-color: #3636a6;
     }
 
@@ -93,6 +106,11 @@
     .room-code-box:active {
       transform: scale(0.97);
     }
+
+    .button-container {
+      display: flex;
+      padding: 0 20px;
+    }
   </style>
 </head>
 
@@ -112,8 +130,9 @@
 
     <div id="player-list" class="players-container"></div>
 
-    <div class="text-center">
+    <div class="button-container">
       <button id="start-game-btn">🚀 Start Game</button>
+      <button id="leave-lobby-btn">👋 Leave Lobby</button>
     </div>
 
     <div class="text-center mt-4">
