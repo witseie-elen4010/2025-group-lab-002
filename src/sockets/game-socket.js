@@ -11,16 +11,60 @@ function setupGameSocket(io) {
       console.log(`${username} joined room ${code}`);
     });
 
+    socket.on('start-game', ({ room }) => {
+      rooms[room.code] = room; 
+      rooms[room.code].roundNumber = 1; 
+      io.to(room.code).emit('start-game'); 
+      io.to(room.code).emit('new-round', { roundNumber: 1, room: rooms[room.code] }); // Emit initial round
+      console.log(`Game started in room ${room.code}`);
+    });
+
+    socket.on('room-created', ({ code, username }) => {
+      socket.join(code);
+      console.log(`Room ${code} created by ${username}`);
+    });
+
+    socket.on('user-joined', ({ username, code }) => {
+      console.log(`${username} joined your room ${code}.`);
+    });
+
+    socket.on('submitClue',  ({ roomCode, username, clue }) => {
+      const room = rooms[roomCode]; // however you're storing room state
+      room.clues.push({ username, clue }); 
+      io.to(roomCode).emit("clueSubmitted", { serverRoom: room });
+      // Advance turn
+      room.currentPlayerIndex =
+        (room.currentPlayerIndex + 1) % room.players.length;
+        room.hasSubmittedClue = false;
+      
+      if (room.currentPlayerIndex === 0) {
+        // You can emit a new event like 'start-discussion'
+        io.to(roomCode).emit('startDiscussion', (room));
+      } else {
+        // Otherwise, update turn as usual
+        io.to(roomCode).emit("update-turn", (room));
+      }
+    });
+
+  socket.on('submitMessage', ({ message, username, code }) => {
+    const room = rooms[code];
+    if (!room) return; // Optional: guard against invalid code
+  
+    room.chat.push({ username, message });
+  
+    io.to(code).emit('newMessage', {
+      username,
+      message
+    });
+
+  });
+
+  socket.on('startVoting', (room) => {
+    io.to(room.code).emit('startVoting', (room));
+  });
+
     socket.on("cast-vote", ({ code, voter, voteFor }) => {
       if (!rooms[code] || !rooms[code].players) return;
-
-      // TEMPORARY: Assign roles if not already assigned
-      if (!rooms[code].players[0].role) {
-        const roles = ["Civilian", "Civilian", "Undercover", "Mr. White"];
-        rooms[code].players.forEach((player, i) => {
-          player.role = roles[i % roles.length];
-        });
-      }
 
       // Initialize votes and voted if not present
       if (!rooms[code].votes) {
@@ -42,6 +86,7 @@ function setupGameSocket(io) {
       const totalPlayers = rooms[code].players.length;
       const totalVotes = Object.keys(rooms[code].voted).length;
       if (totalVotes === totalPlayers) {
+        io.to(code).emit("voting-complete", { votes: rooms[code].votes });
         // Find max votes
         const votes = rooms[code].votes;
         let maxVotes = 0;
@@ -74,80 +119,37 @@ function setupGameSocket(io) {
             username: eliminatedPlayer.username,
             role: eliminatedPlayer.role || "Unknown",
           });
+          // Find the index of the eliminated player
+          const eliminatedIdx = rooms[code].players.findIndex(
+            (p) => p.username === eliminatedPlayer.username
+          );
           // Remove player from room
           rooms[code].players = rooms[code].players.filter(
             (p) => p.username !== eliminatedPlayer.username
           );
+          // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
+          if (rooms[code].currentPlayerIndex > eliminatedIdx) {
+            rooms[code].currentPlayerIndex -= 1;
+          }
+          // If currentPlayerIndex is now out of bounds (e.g. last player was eliminated), reset to 0
+          if (rooms[code].currentPlayerIndex >= rooms[code].players.length) {
+            rooms[code].currentPlayerIndex = 0;
+          }
           rooms[code].votes = {};
           rooms[code].voted = {};
+          // Reset clue submission state for new round
+          rooms[code].hasSubmittedClue = false;
+
+          // Increment round number and reset currentPlayerIndex for new round
+          if (!rooms[code].roundNumber) rooms[code].roundNumber = 1;
+          rooms[code].roundNumber += 1;
+          rooms[code].currentPlayerIndex = 0;
+
+          // Emit new round event to all clients
+          io.to(code).emit('new-round', { roundNumber: rooms[code].roundNumber, room: rooms[code] });
         }
       }
     });
-
-    socket.on('start-game', ({ room }) => {
-      rooms[room.code] = room; 
-      io.to(room.code).emit('start-game'); // Only emit this once, not nested
-      console.log(`Game started in room ${room.code}`);
-    });
-
-    socket.on('room-created', ({ code, username }) => {
-      socket.join(code);
-      console.log(`Room ${code} created by ${username}`);
-    });
-
-    socket.on('user-joined', ({ username, code }) => {
-      console.log(`${username} joined your room ${code}.`);
-    });
-
-    socket.on('submitClue',  ({ roomCode, username, clue }) => {
-      const room = rooms[roomCode]; // however you're storing room state
-      room.clues.push({ username, clue }); 
-      io.to(roomCode).emit("clueSubmitted", { serverRoom: room });
-      // Advance turn
-      room.currentPlayerIndex =
-        (room.currentPlayerIndex + 1) % room.players.length;
-        room.hasSubmittedClue = false;
-
-  
-      // If all clues are in, start voting!
-
-      
-      if (room.currentPlayerIndex === 0) {
-        // You can emit a new event like 'start-discussion'
-        io.to(roomCode).emit('startDiscussion', (room));
-      } else {
-        // Otherwise, update turn as usual
-        io.to(roomCode).emit("update-turn", (room));
-      }
-
-      // // Notify all clients of the new turn
-      // io.to(roomCode).emit('update-turn', {
-      //     currentPlayerIndex: room.currentPlayerIndex
-      // });
-
-      // // If it's back to the first player, start discussion
-      // if (room.currentPlayerIndex === 0) {
-      //     // You can emit a new event like 'start-discussion'
-      //     io.to(roomCode).emit('startDiscussion');
-      // }
-    });
-
-  socket.on('submitMessage', ({ message, username, code }) => {
-    const room = rooms[code];
-    if (!room) return; // Optional: guard against invalid code
-  
-    room.chat.push({ username, message });
-  
-    io.to(code).emit('newMessage', {
-      username,
-      message
-    });
-
-  });
-
-  socket.on('startVoting', (room) => {
-    io.to(room.code).emit('startVoting', (room));
-  });
 
     socket.on('disconnect', () => {
       console.log('Client disconnected');

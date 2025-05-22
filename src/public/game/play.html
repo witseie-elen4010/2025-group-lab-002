@@ -125,6 +125,7 @@
     <div class="header-title">
         <h1>Suspect404</h1>
         <h2>Game Room: <span id="room-code"></span></h2>
+        <h3 id="round-number-display" style="margin-top:0.5em; color:#5959ba;">Round 1</h3>
     </div>
     <div id="turn-indicator" class="turn-indicator">Waiting for turn...</div>
     <div class="text-black p-4 rounded shadow" style="width: 100%; max-width: 100%; background-color: #a6a6d7;">
@@ -147,6 +148,8 @@
             <button class="btn text-black" style="background-color: #5959ba" id="open-chat-btn">Open Chat</button>
             <button class="btn text-black" style="background-color: #5959ba" id="show-clue-history-btn">Show Clue History</button>
         </div>
+
+        <div class="mb-3" id="voting-result-container"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

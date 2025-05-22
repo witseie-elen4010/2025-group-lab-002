@@ -161,12 +161,6 @@ export function setUpSockets(socket){
       btn.textContent = "Cast Vote";
       voteForm.appendChild(btn);
 
-      // Results div
-      const resultsDiv = document.createElement("div");
-      resultsDiv.id = "vote-results";
-      resultsDiv.className = "mt-3";
-      voteForm.appendChild(resultsDiv);
-
       // Insert into DOM
       clueInputContainer.parentNode.insertBefore(
         voteForm,
@@ -174,7 +168,6 @@ export function setUpSockets(socket){
       );
 
     
-
       // Handle vote submission
       voteForm.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -202,12 +195,9 @@ export function setUpSockets(socket){
         select.appendChild(option);
       }
     });
-    // Reset vote results
-    const resultsDiv = document.getElementById("vote-results");
-    if (resultsDiv) resultsDiv.textContent = "";
   });
 
-   // Optionally, hide the vote form after voting is done
+   // Hide the vote form after voting is done
   socket.on("vote-confirmation", (voter) => {
       const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
         username: "Guest",
@@ -221,40 +211,30 @@ export function setUpSockets(socket){
   });
 
 
-  socket.on("voting-complete", ({ votes, votingRound }) => {
-    // Update VotingRound votes
+  socket.on("voting-complete", ({ votes }) => {
     if (!votingRound) return;
-    // Reset votes
-    Object.keys(votingRound.votes).forEach((k) => (votingRound.votes[k] = 0));
-    // Tally votes
-    Object.entries(votes).forEach(([voter, voteFor]) => {
-      try {
-        votingRound.castVote(voter, voteFor);
-      } catch (e) {
-        // Ignore invalid votes
-      }
+    Object.keys(votingRound.votes).forEach((k) => {
+      votingRound.votes[k] = votes[k] || 0;
     });
     const eliminated = votingRound.getEliminatedPlayer();
-    const resultsDiv = document.getElementById("vote-results");
     const voteForm = document.getElementById("vote-form");
+    console.log("Vote Results:", votingRound.votes);
+    console.log("Eliminated:", eliminated);
+
+    // Build the results HTML
+    let breakdown = "<strong>Vote Results:</strong><br>";
+    for (const [username, count] of Object.entries(votingRound.votes)) {
+      breakdown += `${username}: ${count} vote(s)<br>`;
+    }
     if (Array.isArray(eliminated)) {
-      // Tie
-      if (resultsDiv) {
-        resultsDiv.innerHTML = `<strong>Tie!</strong> Players tied: ${eliminated.join(", ")}. Revoting...`;
-      }
-      // Reset vote form for revote
+      breakdown += `<br><strong>Tie!</strong> Players tied: ${eliminated.join(", ")}. Revoting...`;
       if (voteForm) {
         voteForm.style.display = "block";
         const btn = voteForm.querySelector("button[type='submit']");
         if (btn) btn.disabled = false;
       }
-      // Optionally, emit revote event or let server handle
     } else if (eliminated && eliminated.username) {
-      // Show eliminated player
-      if (resultsDiv) {
-        resultsDiv.innerHTML = `<strong>${eliminated.username}</strong> was eliminated!`;
-      }
-      // Mark eliminated player in UI
+      breakdown += `<br><strong>${eliminated.username}</strong> was eliminated! They were a ${eliminated.playerRole}.`;
       document.querySelectorAll(".player").forEach((playerDiv) => {
         const nameDiv = playerDiv.querySelector(".player-name");
         if (nameDiv && nameDiv.textContent === eliminated.username) {
@@ -262,15 +242,87 @@ export function setUpSockets(socket){
           playerDiv.style.opacity = "0.5";
         }
       });
-      // Hide vote form
       if (voteForm) voteForm.style.display = "none";
     } else {
-      // No votes cast
-      if (resultsDiv) {
-        resultsDiv.innerHTML = "No votes were cast.";
-      }
+      breakdown += "<br>No votes were cast.";
       if (voteForm) voteForm.style.display = "none";
     }
+
+    // Show results in a modal popup
+    let modal = document.getElementById("voting-results-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "voting-results-modal";
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100%";
+      modal.style.height = "100%";
+      modal.style.backgroundColor = "rgba(0,0,0,0.7)";
+      modal.style.display = "flex";
+      modal.style.justifyContent = "center";
+      modal.style.alignItems = "center";
+      modal.style.zIndex = "2000";
+
+      // Modal content
+      const modalContent = document.createElement("div");
+      modalContent.style.backgroundColor = "white";
+      modalContent.style.padding = "30px";
+      modalContent.style.borderRadius = "12px";
+      modalContent.style.maxWidth = "90%";
+      modalContent.style.minWidth = "300px";
+      modalContent.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
+      modalContent.id = "voting-results-modal-content";
+
+      // Close button
+      const closeButton = document.createElement("button");
+      closeButton.textContent = "Close";
+      closeButton.className = "btn btn-secondary mt-3";
+      closeButton.style.display = "block";
+      closeButton.style.margin = "20px auto 0 auto";
+      closeButton.onclick = function () {
+        document.body.removeChild(modal);
+      };
+
+      modalContent.innerHTML = `<h3>Voting Results</h3><div id='voting-results-breakdown'></div>`;
+      modalContent.appendChild(closeButton);
+      modal.appendChild(modalContent);
+      document.body.appendChild(modal);
+    } else {
+      // If modal already exists, just update content
+      const modalContent = document.getElementById("voting-results-modal-content");
+      if (modalContent) {
+        modalContent.querySelector("#voting-results-breakdown").innerHTML = breakdown;
+      }
+      modal.style.display = "flex";
+    }
+    // Set the breakdown HTML
+    const breakdownDiv = document.getElementById("voting-results-breakdown");
+    if (breakdownDiv) breakdownDiv.innerHTML = breakdown;
   });
 
+  // Listen for new round event from server
+  socket.on("new-round", ({ roundNumber, room }) => {
+    // Update round number display
+    const roundDisplay = document.getElementById("round-number-display");
+    if (roundDisplay) {
+      roundDisplay.textContent = `Round ${roundNumber}`;
+    }
+    // Update local state and UI
+    displayPlayers(room);
+    updateTurnDisplay(room);
+    //  reset or hide clue input, voting, etc.
+    const clueInput = document.getElementById("clue-input");
+    if (clueInput) clueInput.value = "";
+    const clueInputContainer = document.getElementById("clue-input-container");
+    if (clueInputContainer) clueInputContainer.style.display = "none";
+    // Hide vote form if present
+    const voteForm = document.getElementById("vote-form");
+    if (voteForm) voteForm.style.display = "none";
+    // Remove eliminated player highlight
+    document.querySelectorAll(".player").forEach((playerDiv) => {
+      playerDiv.classList.remove("eliminated-player");
+      playerDiv.style.opacity = "1";
+    });
+  });
 }
