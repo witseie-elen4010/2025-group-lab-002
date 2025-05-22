@@ -1,5 +1,3 @@
-import { assignPlayerRolesAndOrder } from "../utils/assign-roles-order.js";
-
 document.addEventListener('DOMContentLoaded', async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('code');
@@ -56,9 +54,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    startGameButton.addEventListener('click', () => {
+    startGameButton.addEventListener('click', async () => {
         if (players.length >= 3) {
-            room.players = assignPlayerRolesAndOrder(room.players);
+            const res = await fetch('/api/game/assign-roles-order', {
+                method: 'POST',
+                body: JSON.stringify({ players }),
+            });
+            const data = await res.json();
+            room.players = data.players;
             room.hasGameStarted = true;
             socket.emit('start-game', { room });
         }
