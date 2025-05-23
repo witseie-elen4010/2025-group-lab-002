@@ -78,6 +78,43 @@ const Vote = sequelize.define('Vote', {
   tableName: 'votes'
 });
 
+// Define AdminLog model
+const AdminLog = sequelize.define('AdminLog', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  timestamp: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  action: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  details: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  ip_address: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  room: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
+}, {
+  timestamps: false,
+  tableName: 'admin_logs'
+});
+
 async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -117,6 +154,48 @@ async function findUserByEmail(email) {
   }
 }
 
+async function findLogsBetweenTimestamps(startDate, endDate) {
+  try {
+    return await AdminLog.findAll({
+      where: {
+        timestamp: {
+          [DataTypes.Op.between]: [startDate, endDate]
+        }
+      },
+      order: [['timestamp', 'ASC']]
+    });
+  } catch (error) {
+    console.error('Error fetching logs between timestamps:', error);
+    throw error;
+  }
+}
+
+async function findLogsForRoom(room) {
+  try {
+    return await AdminLog.findAll({
+      where: {
+        room
+      },
+      order: [['timestamp', 'DESC']]
+    });
+  } catch (error) {
+    console.error('Error fetching logs for room:', error);
+    throw error;
+  }
+}
+
+async function findLogsByUserId(userId) {
+  try {
+    return await AdminLog.findAll({
+      where: { user_id: userId },
+      order: [['timestamp', 'DESC']]
+    });
+  } catch (error) {
+    console.error('Error fetching logs for user:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   sequelize,
   testConnection,
@@ -125,5 +204,9 @@ module.exports = {
   findUserByUsername,
   findUserByEmail,
   WordPair,
-  Vote // Export Vote model
+  Vote,
+  AdminLog,
+  findLogsBetweenTimestamps,
+  findLogsForRoom,
+  findLogsByUserId
 };
