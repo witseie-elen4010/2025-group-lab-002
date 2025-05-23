@@ -53,10 +53,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       username: "Guest",
     };
     currentUsername = user.username;
+
+    const currentPlayer = room.players.find(
+      (p) => p.username === currentUsername
+    );
+
     // Store word pair
     if (room.wordPair) {
       wordPair = room.wordPair;
-      playerWordElement.textContent = wordPair.civilian_word; // Show civilian word to current player
+
+      if (currentPlayer.playerRole === "undercover") {
+        playerWordElement.textContent = wordPair.undercover_word;
+      }
+      else if (currentPlayer.playerRole === "civilian") {
+        playerWordElement.textContent = wordPair.civilian_word;
+      }
+      else if (currentPlayer.playerRole === "mr.white") {
+        playerWordElement.textContent = "You are Mr. White!";
+      }
     }
 
     // Initialize turn system
