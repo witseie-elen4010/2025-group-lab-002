@@ -87,13 +87,18 @@ export function setUpSockets(socket){
     updateTurnDisplay(room);
   });
 
-  // Listen for new player joining
-  socket.on("player-joined", async ({ room, username }) => {
-    console.log(`username: ${username}`);
+    // Listen for new player joining
+    socket.on("player-joined", async ({ room, username }) => {
+      console.log(`username: ${username}`);
+  
+      displayPlayers(room);
+      updateTurnDisplay(room);
+    });
 
-    displayPlayers(room);
-    updateTurnDisplay(room);
-  });
+    socket.on('player-left', ({ room }) => {
+      displayPlayers(room);
+      updateTurnDisplay(room);
+    });
 
   // Listen for clue submissions
   socket.on("clueSubmitted", (data) => {
@@ -129,6 +134,7 @@ export function setUpSockets(socket){
 
     // Create a new VotingRound instance with the current players
     votingRound = new VotingRound(players);
+    
     // Get current user info from localStorage
     const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
       username: "Guest",
@@ -141,6 +147,8 @@ export function setUpSockets(socket){
       voteForm = document.createElement("form");
       voteForm.id = "vote-form";
       voteForm.className = "mt-4";
+      voteForm.style.maxWidth = "300px";
+      voteForm.style.margin = "0 auto";
 
       // Label
       const label = document.createElement("label");
@@ -158,7 +166,8 @@ export function setUpSockets(socket){
       // Button
       const btn = document.createElement("button");
       btn.type = "submit";
-      btn.className = "btn btn-primary w-100";
+      btn.className = "btn w-100 mb-2";
+      btn.style.backgroundColor = "#5959ba";
       btn.textContent = "Cast Vote";
       voteForm.appendChild(btn);
 
@@ -328,6 +337,35 @@ export function setUpSockets(socket){
       playerDiv.classList.remove("eliminated-player");
       playerDiv.style.opacity = "1";
     });
+
+  
+  });
+
+
+  socket.on("game-over", ({ winner }) => {
+    let modal = document.getElementById("voting-results-modal");
+    let modalContent = document.getElementById("voting-results-modal-content");
+
+    modal.style.display = "flex";
+
+    // Option 2: (Alternative) Automatically show game result after a delay
+    setTimeout(() => {
+      modalContent.innerHTML = `
+        <h2>Game Over</h2>
+        <p class="fs-4"><strong>${winner}</strong> win the game!</p>
+        <button class="btn btn-primary mt-3" id="return-to-lobby">Return To Lobby</button>
+        <button class="btn btn-primary mt-3" id="close-game-over-btn">Close</button>
+      `;
+      document.getElementById("close-game-over-btn").onclick = () => {
+        document.body.removeChild(modal);
+      };
+
+      document.getElementById("return-to-lobby").onclick = () => {
+        window.location.href = `/api/game/lobby?code=${code}`;
+      };
+
+    }, 4000);
+
   });
 
 

@@ -179,6 +179,21 @@ function setupGameSocket(io) {
     socket.on("disconnect", () => {
       console.log("Client disconnected");
     });
+
+    socket.on('leave-room', ({ code, username }) => {
+      socket.leave(code);
+      // Remove player from room's player list
+      rooms[code].players = rooms[code].players.filter(p => p.username !== username);
+      
+      // If no players left, delete the room
+      if (rooms[code].players.length === 0) {
+        delete rooms[code];
+      } else {
+        io.to(code).emit('player-left', { room: rooms[code] });
+      }
+      
+      console.log(`${username} left room ${code}`);
+    });
   });
 }
 

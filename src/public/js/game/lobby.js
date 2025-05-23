@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get('code');
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const playerListContainer = document.getElementById('player-list');
     const roomCodeDisplay = document.getElementById('room-code');
     const startGameButton = document.getElementById('start-game-btn');
+    const leaveLobbyButton = document.getElementById('leave-lobby-btn');
 
     roomCodeDisplay.textContent = roomCode;
 
@@ -56,13 +58,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     startGameButton.addEventListener('click', async () => {
         if (players.length >= 3) {
+            console.log('Starting game with players:', players);
             const res = await fetch('/api/game/assign-roles-order', {
                 method: 'POST',
-                body: JSON.stringify({ players }),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ players:players }),
             });
             const data = await res.json();
+            console.log('Assigned roles:', data.players);
             room.players = data.players;
             room.hasGameStarted = true;
+            room.code = roomCode; // Add room code to the room object
             socket.emit('start-game', { room });
         }
     });
@@ -86,4 +94,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = `/api/game/play?code=${roomCode}`;
     });
 
+    leaveLobbyButton.addEventListener('click', () => {
+        socket.emit('leave-room', { code: roomCode, username: currentUsername });
+        sessionStorage.removeItem('roomCode');
+        window.location.href = '/api/game/join';
+    });
+
+    socket.on('player-left', ({ room }) => {
+        players = room.players;
+        renderPlayerList();
+        updateStartButtonVisibility();
+    });
 });

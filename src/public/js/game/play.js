@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const playerWordElement = document.getElementById("player-word");
   const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
   const openChatBtn = document.getElementById("open-chat-btn");
+  const leaveGameBtn = document.getElementById("leave-game-btn");
 
   const socket = io();
   setUpSockets(socket);
@@ -69,19 +70,31 @@ document.addEventListener('DOMContentLoaded', async function () {
     playerWordElement.textContent = "Error loading game data";
   }
 
-  // Handle clue submission
+  // Handle leaving the game
+  leaveGameBtn.addEventListener("click", function() {
+    if (confirm("Are you sure you want to leave the game?")) {
+      socket.emit("leave-room", { code: roomCode, username: currentUsername });
+      window.location.href = "/api/game/join"; // Redirect to home page
+    }
+  });
+
   submitClueBtn.addEventListener("click", function () {
     const clueInput = document.getElementById("clue-input");
     const clue = clueInput.value.trim();
-
+  
+    if (clue.length > 20) {
+      alert("Clue must be 20 characters or less!");
+      return;
+    }
+  
     if (clue && !room.hasSubmittedClue) {
       room.hasSubmittedClue = true;
-
+  
       clueInput.value = "";
       clueInputContainer.style.display = "none";
       clueInput.disabled = true;
       submitClueBtn.disabled = true;
-
+  
       // Emit the clue to the server with the clue object
       socket.emit("submitClue", {
         roomCode,
@@ -319,5 +332,21 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (btn) btn.disabled = false;
     }
   });
+
+  // Character counter logic
+  const clueInput = document.getElementById("clue-input");
+  const charCounter = document.getElementById("char-counter");
+
+  clueInput.addEventListener("input", function () {
+    const count = this.value.length;
+    charCounter.textContent = `${count}/20`;
+    if (count > 20
+    ) {
+      charCounter.style.color = "red";
+    } else {
+      charCounter.style.color = "#666";
+    }
+  });
 });
+
 
