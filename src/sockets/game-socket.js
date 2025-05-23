@@ -46,7 +46,7 @@ function setupGameSocket(io) {
       }
     });
 
-  socket.on('submitMessage', ({ message, username, code }) => {
+  socket.on('submitMessage', async ({ message, username, code }) => {
     const room = rooms[code];
     if (!room) return; // Optional: guard against invalid code
   

@@ -95,7 +95,7 @@ export function setUpSockets(socket){
     });
 
     // Listen for clue submissions
-    socket.on("clueSubmitted", (data) => {
+    socket.on("clueSubmitted", async (data) => {
       const { serverRoom } = data;
       const room = serverRoom;
       const clue = room.clues[room.clues.length - 1].clue;

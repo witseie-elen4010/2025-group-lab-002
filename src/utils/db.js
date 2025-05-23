@@ -1,5 +1,5 @@
 const sequelize = require('../config/database');
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 
 // Define User model
 const User = sequelize.define('User', {
@@ -159,7 +159,7 @@ async function findLogsBetweenTimestamps(startDate, endDate) {
     return await AdminLog.findAll({
       where: {
         timestamp: {
-          [DataTypes.Op.between]: [startDate, endDate]
+          [Op.between]: [startDate, endDate]
         }
       },
       order: [['timestamp', 'ASC']]

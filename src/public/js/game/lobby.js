@@ -64,6 +64,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             room.players = data.players;
             room.hasGameStarted = true;
             socket.emit('start-game', { room });
+            if (res.ok){             
+                await fetch('/api/admin/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                    action: 'start-game',
+                    details: `User ${currentUsername} started game with code ${room.code}.`,
+                    username: `${currentUsername}`,
+                    room: room.code, // or replace with a room if relevant
+                    ip_address: null // optionally capture on the backend if needed
+                    })
+                });
+            }
         }
     });
 
