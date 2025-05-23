@@ -28,6 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (res.ok) {
+        await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create-game',
+              details: `User ${user.username} created game with code ${data.code}.`,
+              username: `${user.username}`,
+              room: data.code, // or replace with a room if relevant
+              ip_address: null // optionally capture on the backend if needed
+            })
+        });
         sessionStorage.setItem('roomCode', data.code);
         roomCodeElement.textContent = data.code; 
         roomCodeContainer.classList.remove('d-none');
@@ -68,6 +79,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (res.ok) {
+
+        await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create-game',
+              details: `User ${username} joined game with code ${code}.`,
+              username: `${username}`,
+              room: code, // or replace with a room if relevant
+              ip_address: null // optionally capture on the backend if needed
+            })
+        });
+
         sessionStorage.setItem('roomCode', code);
         alert(`Successfully joined room: ${code}`);
 
@@ -126,4 +150,14 @@ document.addEventListener('DOMContentLoaded', () => {
     sessionStorage.removeItem('loggedInUser');
     window.location.href = '/api/users/landing';
   });
+
+
+  const adminButton = document.getElementById('admin-button');
+
+  if (user.username === 'admin') {
+    adminButton.classList.remove('d-none');
+    adminButton.addEventListener('click', () => {
+      window.location.href = '/api/users/admin'; // Replace with your actual admin route
+    });
+  }
 });

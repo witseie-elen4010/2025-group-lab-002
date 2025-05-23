@@ -18,6 +18,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
   
         if (response.ok) {
+            await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'Login',
+              details: `User ${username} logged in.`,
+              username: username,
+              room: null, // or replace with a room if relevant
+              ip_address: null // optionally capture on the backend if needed
+            })
+          });
+
           sessionStorage.setItem('loggedInUser', JSON.stringify(data.user));
           alert('Login successful! Redirecting to landing page...');
           window.location.href = '../game/join';

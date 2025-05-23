@@ -10,7 +10,7 @@ const rooms = {}; // In-memory store for now
 
 router.get('/join', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/game/create-game.html'));
-  });
+});
 
 router.post('/create-room', async (req, res) => {
   const code = generateCode();

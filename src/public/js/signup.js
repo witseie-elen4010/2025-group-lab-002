@@ -25,6 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'Signup',
+              details: `User ${username} signed up.`,
+              username: username,
+              room: null, // or replace with a room if relevant
+              ip_address: null // optionally capture on the backend if needed
+            })
+      });
       // Then, auto-login after successful signup
       const loginResponse = await fetch('/api/users/login', {
         method: 'POST',

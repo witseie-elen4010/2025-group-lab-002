@@ -10,7 +10,7 @@ class Player {
 }
   
 
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async () => {
   // Get the room code from URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const roomCode = urlParams.get("code");
@@ -71,14 +71,26 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Handle leaving the game
-  leaveGameBtn.addEventListener("click", function() {
+  leaveGameBtn.addEventListener("click", async () => {
     if (confirm("Are you sure you want to leave the game?")) {
       socket.emit("leave-room", { code: roomCode, username: currentUsername });
       window.location.href = "/api/game/join"; // Redirect to home page
+
+      await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+            action: 'leave-game',
+            details: `User ${currentUsername} left game with code ${roomCode}.`,
+            username: `${currentUsername}`,
+            room: roomCode, // or replace with a room if relevant
+            ip_address: null // optionally capture on the backend if needed
+            })
+        });
     }
   });
 
-  submitClueBtn.addEventListener("click", function () {
+  submitClueBtn.addEventListener("click", async function () {
     const clueInput = document.getElementById("clue-input");
     const clue = clueInput.value.trim();
   
@@ -100,6 +112,19 @@ document.addEventListener('DOMContentLoaded', async function () {
         roomCode,
         username: currentUsername,
         clue,
+      });
+
+
+      await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'submit-clue',
+              details: `User ${currentUsername} submitted clue: ${clue}.`,
+              username: `${currentUsername}`,
+              room: room.code, // or replace with a room if relevant
+              ip_address: null // optionally capture on the backend if needed
+            })
       });
     }
   });
@@ -247,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     submitMessageBtn.textContent = "Send";
     submitMessageBtn.className = "btn btn-primary mb-2";
 
-    submitMessageBtn.addEventListener("click", () => {
+    submitMessageBtn.addEventListener("click", async () => {
       const message = input.value.trim();
       if (message) {
         if (chatList.textContent === "No chat messages yet.") {
@@ -259,6 +284,18 @@ document.addEventListener('DOMContentLoaded', async function () {
           username: currentUsername,
           code: roomCode,
         }); // Sending message
+
+        await fetch('/api/admin/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+          action: 'submit-message',
+          details: `User ${currentUsername} submitted message:  ${message}.`,
+          username: `${currentUsername}`,
+          room: roomCode, // or replace with a room if relevant
+          ip_address: null // optionally capture on the backend if needed
+          })
+      });
       }
       input.value = "";
     });
@@ -270,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     // Listen for incoming chat messages
-    socket.on("newMessage", ({ username, message }) => {
+    socket.on("newMessage", async ({ username, message }) => {
       const newMsg = document.createElement("div");
       newMsg.innerHTML = `<strong>${username}</strong>: ${message}`;
       chatList.appendChild(newMsg);

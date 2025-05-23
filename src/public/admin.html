@@ -47,10 +47,30 @@
 
     <div class="d-grid gap-3 mt-4">
       <button class="btn btn-custom btn-lg" id="logs-button">📜 View Logs</button>
-      <button class="btn btn-custom btn-lg" id="users-button">👥 Manage Users</button>
-      <button class="btn btn-custom btn-lg" id="settings-button">⚙️ Game Settings</button>
       <button class="btn btn-outline-secondary btn-lg" id="back-button">↩️ Back to Lobby</button>
     </div>
+
+    <!-- Log Filter Section (Initially hidden) -->
+        <div id="log-filters" class="mt-4" style="display: none;">
+            <h4 class="mb-3">Filter Logs</h4>
+                <form id="filter-form">
+                    <div class="mb-3">
+                    <label for="date" class="form-label">Date (YYYY-MM-DD)</label>
+                    <input type="date" class="form-control" id="date" name="date">
+                    </div>
+                    <div class="mb-3">
+                    <label for="room" class="form-label">Room Code</label>
+                    <input type="text" class="form-control" id="room" name="room" placeholder="e.g., ROOM123">
+                    </div>
+                    <div class="mb-3">
+                    <label for="username" class="form-label">Player Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="e.g., alice42">
+                    </div>
+                    <button type="submit" class="btn btn-custom w-100">Search Logs</button>
+                </form>
+
+            <div id="log-results" class="mt-4 text-start"></div>
+        </div>
   </div>
 
   <script src="/js/admin.js"></script>
