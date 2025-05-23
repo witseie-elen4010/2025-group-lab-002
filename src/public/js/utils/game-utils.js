@@ -92,7 +92,6 @@ export function updateTurnDisplay(room) {
       clueInputContainer.style.display = "none";
       document.getElementById("clue-input").disabled = true;
       document.getElementById("submit-clue-btn").disabled = true;
-
     }
   }
 
@@ -102,14 +101,16 @@ export function startDiscussionTime(room) {
         const submitClueBtn = document.getElementById("submit-clue-btn");
         clueInputContainer.style.display = 'none';
         submitClueBtn.style.display = 'none';
+
     
         // Create timer display
         const timerDisplay = document.createElement('div');
         timerDisplay.id = 'discussion-timer';
-        timerDisplay.style.position = 'fixed';
-        timerDisplay.style.top = '10px';
-        timerDisplay.style.right = '10px';
-        timerDisplay.style.backgroundColor = '#333';
+        timerDisplay.style.position = 'absolute';
+        timerDisplay.style.top = '20px';
+        timerDisplay.style.left = '50%';
+        timerDisplay.style.transform = 'translateX(-50%)';
+        timerDisplay.style.backgroundColor = '#808080';
         timerDisplay.style.color = 'white';
         timerDisplay.style.padding = '10px 15px';
         timerDisplay.style.borderRadius = '8px';

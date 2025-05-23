@@ -134,6 +134,7 @@ export function setUpSockets(socket){
 
     // Create a new VotingRound instance with the current players
     votingRound = new VotingRound(players);
+    
     // Get current user info from localStorage
     const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
       username: "Guest",
@@ -146,6 +147,8 @@ export function setUpSockets(socket){
       voteForm = document.createElement("form");
       voteForm.id = "vote-form";
       voteForm.className = "mt-4";
+      voteForm.style.maxWidth = "300px";
+      voteForm.style.margin = "0 auto";
 
       // Label
       const label = document.createElement("label");
@@ -163,7 +166,8 @@ export function setUpSockets(socket){
       // Button
       const btn = document.createElement("button");
       btn.type = "submit";
-      btn.className = "btn btn-primary w-100";
+      btn.className = "btn w-100 mb-2";
+      btn.style.backgroundColor = "#5959ba";
       btn.textContent = "Cast Vote";
       voteForm.appendChild(btn);
 

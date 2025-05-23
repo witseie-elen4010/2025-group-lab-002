@@ -78,19 +78,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   });
 
-  // Handle clue submission
   submitClueBtn.addEventListener("click", function () {
     const clueInput = document.getElementById("clue-input");
     const clue = clueInput.value.trim();
-
+  
+    if (clue.length > 20) {
+      alert("Clue must be 20 characters or less!");
+      return;
+    }
+  
     if (clue && !room.hasSubmittedClue) {
       room.hasSubmittedClue = true;
-
+  
       clueInput.value = "";
       clueInputContainer.style.display = "none";
       clueInput.disabled = true;
       submitClueBtn.disabled = true;
-
+  
       // Emit the clue to the server with the clue object
       socket.emit("submitClue", {
         roomCode,
@@ -328,5 +332,21 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (btn) btn.disabled = false;
     }
   });
+
+  // Character counter logic
+  const clueInput = document.getElementById("clue-input");
+  const charCounter = document.getElementById("char-counter");
+
+  clueInput.addEventListener("input", function () {
+    const count = this.value.length;
+    charCounter.textContent = `${count}/20`;
+    if (count > 20
+    ) {
+      charCounter.style.color = "red";
+    } else {
+      charCounter.style.color = "#666";
+    }
+  });
 });
+
 
