@@ -81,7 +81,8 @@ export function updateTurnDisplay(room) {
       // Show clue input only if it's the current user's turn and they haven't submitted a clue yet
       clueInputContainer.style.display = "block";
       document.getElementById("clue-input").disabled = false;
-      submitClueBtn.disabled = false;
+      document.getElementById("submit-clue-btn").style.display = "block";
+      document.getElementById("submit-clue-btn").disabled = false;
       // Auto-focus the input field when it's the player's turn
       setTimeout(() => {
         document.getElementById("clue-input").focus();
@@ -90,8 +91,7 @@ export function updateTurnDisplay(room) {
       // Hide clue input if it's not their turn or they've already submitted
       clueInputContainer.style.display = "none";
       document.getElementById("clue-input").disabled = true;
-      submitClueBtn.disabled = true;
-
+      document.getElementById("submit-clue-btn").disabled = true;
     }
   }
 
@@ -101,14 +101,16 @@ export function startDiscussionTime(room) {
         const submitClueBtn = document.getElementById("submit-clue-btn");
         clueInputContainer.style.display = 'none';
         submitClueBtn.style.display = 'none';
+
     
         // Create timer display
         const timerDisplay = document.createElement('div');
         timerDisplay.id = 'discussion-timer';
-        timerDisplay.style.position = 'fixed';
-        timerDisplay.style.top = '10px';
-        timerDisplay.style.right = '10px';
-        timerDisplay.style.backgroundColor = '#333';
+        timerDisplay.style.position = 'absolute';
+        timerDisplay.style.top = '20px';
+        timerDisplay.style.left = '50%';
+        timerDisplay.style.transform = 'translateX(-50%)';
+        timerDisplay.style.backgroundColor = '#808080';
         timerDisplay.style.color = 'white';
         timerDisplay.style.padding = '10px 15px';
         timerDisplay.style.borderRadius = '8px';
@@ -131,7 +133,7 @@ export function startDiscussionTime(room) {
     
             if (timeRemaining <= 0) {
                 clearInterval(countdown);
-                document.body.removeChild(timerDisplay); // Remove the timer from screen
+              document.body.removeChild(timerDisplay); // Remove the timer from screen
                 startVoting(room); // Move to voting phase
             }
         }, 1000);

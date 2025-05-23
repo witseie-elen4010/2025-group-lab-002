@@ -78,13 +78,14 @@ import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussion
 }
 
 export function setUpSockets(socket){
-
-    let votingRound = null;
-    // Listen for current turn updates from server
-    socket.on("update-turn", (room) => {
-      console.log("Received update-turn event:", room);
-      updateTurnDisplay(room);
-    });
+  let votingRound = null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code");
+  // Listen for current turn updates from server
+  socket.on("update-turn", (room) => {
+    console.log("Received update-turn event:", room);
+    updateTurnDisplay(room);
+  });
 
     // Listen for new player joining
     socket.on("player-joined", async ({ room, username }) => {
@@ -94,52 +95,60 @@ export function setUpSockets(socket){
       updateTurnDisplay(room);
     });
 
-    // Listen for clue submissions
-    socket.on("clueSubmitted", async (data) => {
-      const { serverRoom } = data;
-      const room = serverRoom;
-      const clue = room.clues[room.clues.length - 1].clue;
-      console.log(`current player idx: ${room.currentPlayerIndex}`);
-  
-      // Display clue in speech bubble
-      const playerDiv = document.querySelector(
-        `.player[data-player-index="${room.currentPlayerIndex}"]`
-      );
-      if (playerDiv) {
-        const speechBubble = playerDiv.querySelector(".speech-bubble");
-        speechBubble.textContent = clue;
-        speechBubble.classList.add("has-clue");
-        speechBubble.style.display = "block";
-      }
+    socket.on('player-left', ({ room }) => {
+      displayPlayers(room);
+      updateTurnDisplay(room);
     });
 
-    socket.on('startDiscussion', (room) => {
-      const openChatBtn = document.getElementById("open-chat-btn");
-      openChatBtn.click()
-      startDiscussionTime(room);
-    })
+  // Listen for clue submissions
+  socket.on("clueSubmitted", (data) => {
+    const { serverRoom } = data;
+    const room = serverRoom;
+    const clue = room.clues[room.clues.length - 1].clue;
+    console.log(`current player idx: ${room.currentPlayerIndex}`);
 
-      // Listen for startVoting event from server
+    // Display clue in speech bubble
+    const playerDiv = document.querySelector(
+      `.player[data-player-index="${room.currentPlayerIndex}"]`
+    );
+    if (playerDiv) {
+      const speechBubble = playerDiv.querySelector(".speech-bubble");
+      speechBubble.textContent = clue;
+      speechBubble.classList.add("has-clue");
+      speechBubble.style.display = "block";
+    }
+  });
+
+  socket.on("startDiscussion", (room) => {
+    const openChatBtn = document.getElementById("open-chat-btn");
+    openChatBtn.click();
+    startDiscussionTime(room);
+  });
+
+  // Listen for startVoting event from server
   socket.on("startVoting", (room) => {
     // Hide clue input
-    const clueInputContainer = document.getElementById("clue-input-container")
+    const clueInputContainer = document.getElementById("clue-input-container");
     clueInputContainer.style.display = "none";
-    const players = room.players; 
+    const players = room.players;
 
     // Create a new VotingRound instance with the current players
     votingRound = new VotingRound(players);
-    // Get current user info from localStorage
-      const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
-        username: "Guest",
-      };
-      const currentUsername = user.username;
     
+    // Get current user info from localStorage
+    const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
+      username: "Guest",
+    };
+    const currentUsername = user.username;
+
     // If vote form doesn't exist, create it
     let voteForm = document.getElementById("vote-form");
     if (!voteForm) {
       voteForm = document.createElement("form");
       voteForm.id = "vote-form";
       voteForm.className = "mt-4";
+      voteForm.style.maxWidth = "300px";
+      voteForm.style.margin = "0 auto";
 
       // Label
       const label = document.createElement("label");
@@ -157,7 +166,8 @@ export function setUpSockets(socket){
       // Button
       const btn = document.createElement("button");
       btn.type = "submit";
-      btn.className = "btn btn-primary w-100";
+      btn.className = "btn w-100 mb-2";
+      btn.style.backgroundColor = "#5959ba";
       btn.textContent = "Cast Vote";
       voteForm.appendChild(btn);
 
@@ -167,7 +177,6 @@ export function setUpSockets(socket){
         clueInputContainer.nextSibling
       );
 
-    
       // Handle vote submission
       voteForm.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -197,19 +206,18 @@ export function setUpSockets(socket){
     });
   });
 
-   // Hide the vote form after voting is done
+  // Hide the vote form after voting is done
   socket.on("vote-confirmation", (voter) => {
-      const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
-        username: "Guest",
-      };
-      const currentUsername = user.username;
+    const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
+      username: "Guest",
+    };
+    const currentUsername = user.username;
 
     if (voter === currentUsername) {
       const voteForm = document.getElementById("vote-form");
       if (voteForm) voteForm.style.display = "none";
     }
   });
-
 
   socket.on("voting-complete", ({ votes }) => {
     if (!votingRound) return;
@@ -227,7 +235,9 @@ export function setUpSockets(socket){
       breakdown += `${username}: ${count} vote(s)<br>`;
     }
     if (Array.isArray(eliminated)) {
-      breakdown += `<br><strong>Tie!</strong> Players tied: ${eliminated.join(", ")}. Revoting...`;
+      breakdown += `<br><strong>Tie!</strong> Players tied: ${eliminated.join(
+        ", "
+      )}. Revoting...`;
       if (voteForm) {
         voteForm.style.display = "block";
         const btn = voteForm.querySelector("button[type='submit']");
@@ -290,9 +300,12 @@ export function setUpSockets(socket){
       document.body.appendChild(modal);
     } else {
       // If modal already exists, just update content
-      const modalContent = document.getElementById("voting-results-modal-content");
+      const modalContent = document.getElementById(
+        "voting-results-modal-content"
+      );
       if (modalContent) {
-        modalContent.querySelector("#voting-results-breakdown").innerHTML = breakdown;
+        modalContent.querySelector("#voting-results-breakdown").innerHTML =
+          breakdown;
       }
       modal.style.display = "flex";
     }
@@ -324,5 +337,61 @@ export function setUpSockets(socket){
       playerDiv.classList.remove("eliminated-player");
       playerDiv.style.opacity = "1";
     });
+
+  
+  });
+
+
+  socket.on("game-over", ({ winner }) => {
+    let modal = document.getElementById("voting-results-modal");
+    let modalContent = document.getElementById("voting-results-modal-content");
+
+    modal.style.display = "flex";
+
+    // Option 2: (Alternative) Automatically show game result after a delay
+    setTimeout(() => {
+      modalContent.innerHTML = `
+        <h2>Game Over</h2>
+        <p class="fs-4"><strong>${winner}</strong> win the game!</p>
+        <button class="btn btn-primary mt-3" id="return-to-lobby">Return To Lobby</button>
+        <button class="btn btn-primary mt-3" id="close-game-over-btn">Close</button>
+      `;
+      document.getElementById("close-game-over-btn").onclick = () => {
+        document.body.removeChild(modal);
+      };
+
+      document.getElementById("return-to-lobby").onclick = () => {
+        window.location.href = `/api/game/lobby?code=${code}`;
+      };
+
+    }, 4000);
+
+  });
+
+
+  socket.on("game-over", ({ winner }) => {
+    let modal = document.getElementById("voting-results-modal");
+    let modalContent = document.getElementById("voting-results-modal-content");
+
+    modal.style.display = "flex";
+
+    // Option 2: (Alternative) Automatically show game result after a delay
+    setTimeout(() => {
+      modalContent.innerHTML = `
+        <h2>Game Over</h2>
+        <p class="fs-4"><strong>${winner}</strong> win the game!</p>
+        <button class="btn btn-primary mt-3" id="return-to-lobby">Return To Lobby</button>
+        <button class="btn btn-primary mt-3" id="close-game-over-btn">Close</button>
+      `;
+      document.getElementById("close-game-over-btn").onclick = () => {
+        document.body.removeChild(modal);
+      };
+
+      document.getElementById("return-to-lobby").onclick = () => {
+        window.location.href = `/api/game/lobby?code=${code}`;
+      };
+
+    }, 4000);
+
   });
 }

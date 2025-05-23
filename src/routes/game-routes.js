@@ -100,8 +100,11 @@ router.get('/voting-round', (req, res) => {
 });
 
 router.post('/assign-roles-order', (req, res) => {
+  console.log('Assigning roles to players:', req.body);
   const { players } = req.body;
+  console.log('Assigning roles to players:', players);
   const assigned = assignPlayerRolesAndOrder(players);
+  console.log('Assigned roles:', assigned);
   res.status(200).json({ message: 'Roles assigned', players: assigned });
 });
 
