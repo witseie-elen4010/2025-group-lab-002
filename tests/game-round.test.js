@@ -34,14 +34,15 @@ describe("Game Round Functionality", () => {
     clients.forEach((c) => c.close());
   });
 
-  test("round number increments and currentPlayerIndex resets after elimination", (done) => {
+  test("round number increments and currentPlayerIndex resets after elimination if game not over", (done) => {
     const code = "ROUND1";
     rooms[code] = {
       code,
       players: [
-        { username: "A", role: "Civilian" },
-        { username: "B", role: "Undercover" },
-        { username: "C", role: "Civilian" },
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "civilian" },
+        { username: "D", playerRole: "civilian" },
       ],
       clues: [],
       currentPlayerIndex: 0,
@@ -54,22 +55,31 @@ describe("Game Round Functionality", () => {
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
     ];
-    let newRoundCount = 0;
+    let newRoundReceived = false;
+    let gameOverReceived = false;
     clients[0].on("new-round", ({ roundNumber, room }) => {
-      newRoundCount++;
+      newRoundReceived = true;
       expect(roundNumber).toBe(2);
       expect(room.currentPlayerIndex).toBe(0);
-      expect(room.players.length).toBe(2);
-      done();
+      expect(room.players.length).toBe(3);
+      setTimeout(() => {
+        expect(gameOverReceived).toBe(false);
+        done();
+      }, 100);
+    });
+    clients[0].on("game-over", () => {
+      gameOverReceived = true;
     });
     // All join
     clients.forEach((c, i) => c.emit("join-room", { code, username: rooms[code].players[i].username }));
-    // Simulate votes: eliminate B
+
     setTimeout(() => {
-      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "B" });
-      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "B" });
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
       clients[2].emit("cast-vote", { code, voter: "C", voteFor: "B" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "C" });
     }, 100);
   });
 
@@ -78,9 +88,10 @@ describe("Game Round Functionality", () => {
     rooms[code] = {
       code,
       players: [
-        { username: "A", role: "Civilian" },
-        { username: "B", role: "Undercover" },
-        { username: "C", role: "Civilian" },
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "civilian" },
+        { username: "D", playerRole: "civilian" },
       ],
       clues: [],
       currentPlayerIndex: 0,
@@ -93,6 +104,7 @@ describe("Game Round Functionality", () => {
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
     ];
     let clueCount = 0;
     let roundStarted = false;
@@ -114,8 +126,8 @@ describe("Game Round Functionality", () => {
     });
     clients[0].on("clueSubmitted", ({ serverRoom }) => {
       clueCount++;
-      if (clueCount === 2) {
-        expect(serverRoom.clues.length).toBeGreaterThanOrEqual(2);
+      if (clueCount === 3) {
+        expect(serverRoom.clues.length).toBeGreaterThanOrEqual(3);
         done();
       }
     });
@@ -125,7 +137,8 @@ describe("Game Round Functionality", () => {
     setTimeout(() => {
       clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
       clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
-      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "C" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "B" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "C" });
     }, 100);
   });
 
@@ -134,9 +147,11 @@ describe("Game Round Functionality", () => {
     rooms[code] = {
       code,
       players: [
-        { username: "A", role: "Civilian" },
-        { username: "B", role: "Undercover" },
-        { username: "C", role: "Civilian" },
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "civilian" },
+        { username: "D", playerRole: "civilian" },
+        { username: "E", playerRole: "civilian" },
       ],
       clues: [],
       currentPlayerIndex: 0,
@@ -149,6 +164,8 @@ describe("Game Round Functionality", () => {
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
       Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
     ];
     let roundNumbers = [];
     clients[0].on("new-round", ({ roundNumber }) => {
@@ -160,15 +177,102 @@ describe("Game Round Functionality", () => {
     });
     // All join
     clients.forEach((c, i) => c.emit("join-room", { code, username: rooms[code].players[i].username }));
-    // Eliminate B, then A
+    // Eliminate E
+    setTimeout(() => {
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "E" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "E" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "E" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "E" });
+      clients[4].emit("cast-vote", { code, voter: "E", voteFor: "C" });
+    }, 100);
+    //Eliminate C
+    setTimeout(() => {
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "C" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "C" });
+    }, 400);
+  });
+
+  test("game ends and no new round when only civilians remain (civilians win)", (done) => {
+    const code = "CIVWIN";
+    rooms[code] = {
+      code,
+      players: [
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "civilian" },
+      ],
+      clues: [],
+      currentPlayerIndex: 0,
+      hasSubmittedClue: false,
+      roundNumber: 1,
+      votes: {},
+      voted: {},
+    };
+    clients = [
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
+    ];
+    let newRoundReceived = false;
+    clients[0].on("new-round", () => {
+      newRoundReceived = true;
+    });
+    clients[0].on("game-over", ({ winner }) => {
+      expect(winner).toMatch(/civilians/i);
+      setTimeout(() => {
+        expect(newRoundReceived).toBe(false);
+        done();
+      }, 100);
+    });
+    clients.forEach((c, i) => c.emit("join-room", { code, username: rooms[code].players[i].username }));
+    // Eliminate B (undercover) - civilians win, no new round
     setTimeout(() => {
       clients[0].emit("cast-vote", { code, voter: "A", voteFor: "B" });
       clients[1].emit("cast-vote", { code, voter: "B", voteFor: "B" });
       clients[2].emit("cast-vote", { code, voter: "C", voteFor: "B" });
     }, 100);
+  });
+
+  test("game ends and no new round when only one civilian remains (impostors win)", (done) => {
+    const code = "IMPWIN";
+    rooms[code] = {
+      code,
+      players: [
+        { username: "A", playerRole: "undercover" },
+        { username: "B", playerRole: "civilian" },
+        { username: "C", playerRole: "civilian" },
+      ],
+      clues: [],
+      currentPlayerIndex: 0,
+      hasSubmittedClue: false,
+      roundNumber: 1,
+      votes: {},
+      voted: {},
+    };
+    clients = [
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
+    ];
+    let newRoundReceived = false;
+    clients[0].on("new-round", () => {
+      newRoundReceived = true;
+    });
+    clients[0].on("game-over", ({ winner }) => {
+      expect(winner).toMatch(/Impostor|undercover/i);
+      setTimeout(() => {
+        expect(newRoundReceived).toBe(false);
+        done();
+      }, 100);
+    });
+    clients.forEach((c, i) => c.emit("join-room", { code, username: rooms[code].players[i].username }));
+    // Eliminate C (civilian) - only one civilian left, impostors win
     setTimeout(() => {
-      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "A" });
-      clients[1].emit("cast-vote", { code, voter: "C", voteFor: "A" });
-    }, 400);
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "C" });
+    }, 100);
   });
 });
