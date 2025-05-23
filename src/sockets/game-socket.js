@@ -159,7 +159,14 @@ function setupGameSocket(io) {
       socket.leave(code);
       // Remove player from room's player list
       rooms[code].players = rooms[code].players.filter(p => p.username !== username);
-      io.to(code).emit('player-left', { room: rooms[code] });
+      
+      // If no players left, delete the room
+      if (rooms[code].players.length === 0) {
+        delete rooms[code];
+      } else {
+        io.to(code).emit('player-left', { room: rooms[code] });
+      }
+      
       console.log(`${username} left room ${code}`);
     });
   });

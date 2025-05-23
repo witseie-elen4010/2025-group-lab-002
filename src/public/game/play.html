@@ -118,10 +118,28 @@
             font-weight: bold;
             color: #333;
         }
+
+        .leave-game-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .leave-game-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 
 <body class="d-flex flex-column justify-content-center align-items-center vh-100 bg-white">
+    <button id="leave-game-btn" class="leave-game-btn">Leave Game</button>
     <div class="header-title">
         <h1>Suspect404</h1>
         <h2>Game Room: <span id="room-code"></span></h2>

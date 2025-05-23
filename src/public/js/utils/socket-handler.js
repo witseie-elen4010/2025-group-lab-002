@@ -94,6 +94,11 @@ export function setUpSockets(socket){
       updateTurnDisplay(room);
     });
 
+    socket.on('player-left', ({ room }) => {
+      displayPlayers(room);
+      updateTurnDisplay(room);
+    });
+
     // Listen for clue submissions
     socket.on("clueSubmitted", (data) => {
       const { serverRoom } = data;
@@ -324,5 +329,7 @@ export function setUpSockets(socket){
       playerDiv.classList.remove("eliminated-player");
       playerDiv.style.opacity = "1";
     });
+
+    
   });
 }

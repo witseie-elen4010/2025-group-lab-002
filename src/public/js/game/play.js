@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const playerWordElement = document.getElementById("player-word");
   const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
   const openChatBtn = document.getElementById("open-chat-btn");
+  const leaveGameBtn = document.getElementById("leave-game-btn");
 
   const socket = io();
   setUpSockets(socket);
@@ -68,6 +69,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.error("Error processing room data:", error);
     playerWordElement.textContent = "Error loading game data";
   }
+
+  // Handle leaving the game
+  leaveGameBtn.addEventListener("click", function() {
+    if (confirm("Are you sure you want to leave the game?")) {
+      socket.emit("leave-room", { code: roomCode, username: currentUsername });
+      window.location.href = "/api/game/join"; // Redirect to home page
+    }
+  });
 
   // Handle clue submission
   submitClueBtn.addEventListener("click", function () {

@@ -58,13 +58,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     startGameButton.addEventListener('click', async () => {
         if (players.length >= 3) {
+            console.log('Starting game with players:', players);
             const res = await fetch('/api/game/assign-roles-order', {
                 method: 'POST',
-                body: JSON.stringify({ players }),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ players:players }),
             });
             const data = await res.json();
+            console.log('Assigned roles:', data.players);
             room.players = data.players;
             room.hasGameStarted = true;
+            room.code = roomCode; // Add room code to the room object
             socket.emit('start-game', { room });
         }
     });
