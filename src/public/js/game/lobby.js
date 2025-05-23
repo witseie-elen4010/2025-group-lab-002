@@ -107,10 +107,22 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = `/api/game/play?code=${roomCode}`;
     });
 
-    leaveLobbyButton.addEventListener('click', () => {
+    leaveLobbyButton.addEventListener('click', async () => {
         socket.emit('leave-room', { code: roomCode, username: currentUsername });
         sessionStorage.removeItem('roomCode');
         window.location.href = '/api/game/join';
+
+        await fetch('/api/admin/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+            action: 'leave-lobby',
+            details: `User ${currentUsername} left lobby with code ${roomCode}.`,
+            username: `${currentUsername}`,
+            room: roomCode, // or replace with a room if relevant
+            ip_address: null // optionally capture on the backend if needed
+            })
+        });
     });
 
     socket.on('player-left', ({ room }) => {
