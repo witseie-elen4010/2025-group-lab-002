@@ -11,7 +11,7 @@ function shuffle(array) {
   return array;
 }
 
-export function assignPlayerRolesAndOrder(players) {
+function assignPlayerRolesAndOrder(players) {
   if (players.length < 3) {
     throw new Error('Need at least 3 players to start the game');
   }
@@ -40,3 +40,4 @@ export function assignPlayerRolesAndOrder(players) {
   return assigned;
 }
 
+module.exports = { assignPlayerRolesAndOrder };

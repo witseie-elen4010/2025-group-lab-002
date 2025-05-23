@@ -3,6 +3,7 @@ const path = require('path')
 const router = express.Router();
 const generateCode = require('../utils/create-game-code');
 const getRandomWordPair = require('../utils/get-word-pair');
+const { assignPlayerRolesAndOrder } = require('../utils/assign-roles-order');
 
 
 const rooms = {}; // In-memory store for now
@@ -96,6 +97,12 @@ router.get('/players', (req, res) => {
 
 router.get('/voting-round', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/game/voting-round.html'));
+});
+
+router.post('/assign-roles-order', (req, res) => {
+  const { players } = req.body;
+  const assigned = assignPlayerRolesAndOrder(players);
+  res.status(200).json({ message: 'Roles assigned', players: assigned });
 });
 
 module.exports = { router, rooms };
