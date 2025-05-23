@@ -304,27 +304,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Re-render player list and turn indicator using server state
     displayPlayers(room);
     updateTurnDisplay(room);
-    // Clear and enable clue input for the correct player
-    const clueInput = document.getElementById("clue-input");
-    if (clueInput) {
-      clueInput.value = "";
-      clueInput.disabled = false;
-    }
-    const clueInputContainer = document.getElementById("clue-input-container");
-    const submitClueBtn = document.getElementById("submit-clue-btn");
-    // Only show clue input for the current player
-    const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
-      username: "Guest",
-    };
-    const currentUsername = user.username;
-    const currentPlayer = room.players[room.currentPlayerIndex];
-    if (currentPlayer && currentPlayer.username === currentUsername) {
-      if (clueInputContainer) clueInputContainer.style.display = "block";
-      if (submitClueBtn) submitClueBtn.disabled = false;
-    } else {
-      if (clueInputContainer) clueInputContainer.style.display = "none";
-      if (submitClueBtn) submitClueBtn.disabled = true;
-    }
+
     // Hide vote form if present
     const voteForm = document.getElementById("vote-form");
     if (voteForm) voteForm.style.display = "none";
