@@ -117,81 +117,160 @@ function setupGameSocket(io) {
           const eliminatedPlayer = rooms[code].players.find(
             (p) => p.username === eliminated[0]
           );
-          io.to(code).emit("player-eliminated", {
-            username: eliminatedPlayer.username,
-            role: eliminatedPlayer.role || "Unknown",
-          });
+
+          const eliminatedRole = eliminatedPlayer.playerRole;
+
+          console.log(`Eliminating player ${eliminatedPlayer.username} with role ${eliminatedRole}`);
+          
+
           // Find the index of the eliminated player
           const eliminatedIdx = rooms[code].players.findIndex(
             (p) => p.username === eliminatedPlayer.username
           );
-          // Remove player from room
-          rooms[code].players = rooms[code].players.filter(
-            (p) => p.username !== eliminatedPlayer.username
-          );
 
-          //check win condition
-          const civilians = rooms[code].players.filter(
-            (p) => p.playerRole === "civilian"
-          ).length;
-          const impostors = rooms[code].players.filter(
-            (p) => p.playerRole === "undercover" || p.playerRole === "mr.white"
-          ).length;
+          //remove player from room
+          if (eliminatedRole !== "mr.white") {
+            rooms[code].players = rooms[code].players.filter(
+              (p) => p.username !== eliminatedPlayer.username
+            );
 
-          let winner = null;
-          if (impostors === 0) {
-            winner = "Civilians";
-          } else if (civilians <= 1) {
-            winner = "Impostors";
-          }
-
-          if (winner) {
-            io.to(code).emit("game-over", { winner });
-          } else {
-            // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
-            if (rooms[code].currentPlayerIndex > eliminatedIdx) {
-              rooms[code].currentPlayerIndex -= 1;
-            }
-            // If currentPlayerIndex is now out of bounds (e.g. last player was eliminated), reset to 0
-            if (rooms[code].currentPlayerIndex >= rooms[code].players.length) {
-              rooms[code].currentPlayerIndex = 0;
-            }
-            rooms[code].votes = {};
-            rooms[code].voted = {};
-            // Reset clue submission state for new round
-            rooms[code].hasSubmittedClue = false;
-
-            // Increment round number and reset currentPlayerIndex for new round
-            if (!rooms[code].roundNumber) rooms[code].roundNumber = 1;
-            rooms[code].roundNumber += 1;
-            rooms[code].currentPlayerIndex = 0;
-
-            // Emit new round event to all clients
-            io.to(code).emit("new-round", {
-              roundNumber: rooms[code].roundNumber,
-              room: rooms[code],
+            io.to(code).emit("player-eliminated", {
+              username: eliminatedPlayer.username,
+              role: eliminatedPlayer.role || "Unknown",
             });
+
+            //check win condition
+            const civilians = rooms[code].players.filter(
+              (p) => p.playerRole === "civilian"
+            ).length;
+            const impostors = rooms[code].players.filter(
+              (p) => p.playerRole === "undercover" || p.playerRole === "mr.white"
+            ).length;
+
+            let winner = null;
+            if (impostors === 0) {
+              winner = "Civilians";
+            } else if (civilians <= 1) {
+              winner = "Impostors";
+            }
+
+            if (winner) {
+              io.to(code).emit("game-over", { winner });
+            } else {
+              // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
+              if (rooms[code].currentPlayerIndex > eliminatedIdx) {
+                rooms[code].currentPlayerIndex -= 1;
+              }
+              // If currentPlayerIndex is now out of bounds (e.g. last player was eliminated), reset to 0
+              if (rooms[code].currentPlayerIndex >= rooms[code].players.length) {
+                rooms[code].currentPlayerIndex = 0;
+              }
+              rooms[code].votes = {};
+              rooms[code].voted = {};
+              // Reset clue submission state for new round
+              rooms[code].hasSubmittedClue = false;
+
+              // Increment round number and reset currentPlayerIndex for new round
+              if (!rooms[code].roundNumber) rooms[code].roundNumber = 1;
+              rooms[code].roundNumber += 1;
+              rooms[code].currentPlayerIndex = 0;
+
+              // Emit new round event to all clients
+              io.to(code).emit("new-round", {
+                roundNumber: rooms[code].roundNumber,
+                room: rooms[code],
+              });
+            }
           }
         }
       }
     });
 
+    function removeAllPlayersFromRoom(code) {
+      if (!rooms[code]) return;
+      rooms[code].players = [];
+      rooms[code].votes = {};
+      rooms[code].voted = {};
+      rooms[code].clues = [];
+      rooms[code].chat = [];
+    }
+
+    socket.on("mr-white-guess", ({ code, username, guess }) => {
+      const room = rooms[code];
+      if (!room) return;
+
+      // Find the civilian word
+      const civilianWord = room.wordPair?.civilian_word || "";
+      const correct =
+        guess.trim().toLowerCase() === civilianWord.trim().toLowerCase();
+
+      // Notify only the guessing client of the result
+      socket.emit("mr-white-guess-result", {
+        correct,
+        civilianWord,
+      });
+
+      // If correct, Mr. White wins
+      if (correct) {
+        // End the game, announce Mr. White as winner
+        io.to(code).emit("game-over", { winner: "Mr. White" });
+        removeAllPlayersFromRoom(code);
+      } else {
+        // Remove Mr. White from the room's players
+        room.players = room.players.filter((p) => p.username !== username);
+
+        // Check win condition after Mr. White is eliminated
+        const civilians = room.players.filter(
+          (p) => p.playerRole === "civilian"
+        ).length;
+        const impostors = room.players.filter(
+          (p) => p.playerRole === "undercover" || p.playerRole === "mr.white"
+        ).length;
+
+        let winner = null;
+        if (impostors === 0) {
+          winner = "Civilians";
+        } else if (civilians <= 1) {
+          winner = "Impostors";
+        }
+
+        if (winner) {
+          io.to(code).emit("game-over", { winner });
+          removeAllPlayersFromRoom(code);
+        } else {
+          if (!room.roundNumber) room.roundNumber = 1;
+          room.roundNumber += 1;
+          room.currentPlayerIndex = 0;
+          room.hasSubmittedClue = false;
+          room.votes = {};
+          room.voted = {};
+          io.to(code).emit("new-round", {
+            roundNumber: room.roundNumber,
+            room,
+          });
+        }
+      }
+    });
+
+
     socket.on("disconnect", () => {
       console.log("Client disconnected");
     });
 
-    socket.on('leave-room', ({ code, username }) => {
+    socket.on("leave-room", ({ code, username }) => {
       socket.leave(code);
       // Remove player from room's player list
-      rooms[code].players = rooms[code].players.filter(p => p.username !== username);
-      
+      rooms[code].players = rooms[code].players.filter(
+        (p) => p.username !== username
+      );
+
       // If no players left, delete the room
       if (rooms[code].players.length === 0) {
         delete rooms[code];
       } else {
-        io.to(code).emit('player-left', { room: rooms[code] });
+        io.to(code).emit("player-left", { room: rooms[code] });
       }
-      
+
       console.log(`${username} left room ${code}`);
     });
   });

@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Game state
-  let votingRound = null;
   let wordPair = room.wordPair;
 
   // DOM elements
@@ -35,6 +34,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showClueHistoryBtn = document.getElementById("show-clue-history-btn");
   const openChatBtn = document.getElementById("open-chat-btn");
   const leaveGameBtn = document.getElementById("leave-game-btn");
+
+  // Add show/hide player word button
+  let toggleWordBtn = document.getElementById("toggle-player-word-btn");
+  if (!toggleWordBtn) {
+    toggleWordBtn = document.createElement("button");
+    toggleWordBtn.id = "toggle-player-word-btn";
+    toggleWordBtn.className = "btn btn-outline-secondary mb-2";
+    toggleWordBtn.style.position = "relative";
+    toggleWordBtn.textContent = "Hide Word";
+    playerWordElement.parentNode.appendChild(toggleWordBtn);
+  }
+  
+  let wordVisible = true;
+  toggleWordBtn.onclick = function () {
+    wordVisible = !wordVisible;
+    playerWordElement.style.visibility = wordVisible ? "visible" : "hidden";
+    toggleWordBtn.textContent = wordVisible ? "Hide Word" : "Show Word";
+  };
 
   const socket = io();
   setUpSockets(socket);
