@@ -216,8 +216,18 @@ function setupGameSocket(io) {
         io.to(code).emit("game-over", { winner: "Mr. White" });
         removeAllPlayersFromRoom(code);
       } else {
+        const eliminatedPlayer = room.players.find(
+          (p) => p.username === username
+        );
+
         // Remove Mr. White from the room's players
+        io.to(code).emit("player-eliminated", {
+          username: eliminatedPlayer.username,
+          role: eliminatedPlayer.playerRole || "mr.white",
+        });
+        
         room.players = room.players.filter((p) => p.username !== username);
+
 
         // Check win condition after Mr. White is eliminated
         const civilians = room.players.filter(
