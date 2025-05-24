@@ -275,4 +275,132 @@ describe("Game Round Functionality", () => {
       clients[2].emit("cast-vote", { code, voter: "C", voteFor: "C" });
     }, 100);
   });
+
+  test("Mr. White gets a guess when voted out and wins if correct", (done) => {
+    const code = "MRWHITE1";
+    rooms[code] = {
+      code,
+      players: [
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "mr.white" },
+        { username: "D", playerRole: "civilian" },
+      ],
+      wordPair: { civilian_word: "apple", undercover_word: "banana" },
+      clues: [],
+      currentPlayerIndex: 0,
+      hasSubmittedClue: false,
+      roundNumber: 1,
+      votes: {},
+      voted: {},
+    };
+    clients = [
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`)
+    ];
+    let mrWhiteGuessPrompted = false;
+    let mrWhiteGuessResult = null;
+    let gameOverWinner = null;
+
+    // Listen for voting-complete and simulate Mr. White's guess
+    clients[2].on("voting-complete", ({ votes }) => {
+      // Simulate Mr. White guessing correctly
+      clients[2].emit("mr-white-guess", { code, username: "C", guess: "apple" });
+    });
+    clients[2].on("mr-white-guess-result", ({ correct, civilianWord }) => {
+      mrWhiteGuessPrompted = true;
+      mrWhiteGuessResult = correct;
+    });
+    clients[2].on("game-over", ({ winner }) => {
+      gameOverWinner = winner;
+      setTimeout(() => {
+        expect(mrWhiteGuessPrompted).toBe(true);
+        expect(mrWhiteGuessResult).toBe(true);
+        expect(gameOverWinner).toBe("Mr. White");
+        done();
+      }, 100);
+    });
+    // All join
+    clients.forEach((c, i) => c.emit("join-room", { code, username: rooms[code].players[i].username }));
+    setTimeout(() => {
+      // Vote out Mr. White
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "B" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "C" });
+    }, 100);
+  });
+
+  test("Mr. White is eliminated if guess is incorrect", (done) => {
+    const code = "MRWHITE_FAIL";
+    rooms[code] = {
+      code,
+      players: [
+        { username: "A", playerRole: "civilian" },
+        { username: "B", playerRole: "undercover" },
+        { username: "C", playerRole: "mr.white" },
+        { username: "D", playerRole: "civilian" },
+      ],
+      wordPair: { civilian_word: "apple", undercover_word: "banana" },
+      clues: [],
+      currentPlayerIndex: 0,
+      hasSubmittedClue: false,
+      roundNumber: 1,
+      votes: {},
+      voted: {},
+    };
+    clients = [
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+      Client(`http://localhost:${port}`),
+    ];
+
+    let guessResultReceived = false;
+    let eliminatedReceived = false;
+
+    // Simulate Mr. White's guess after being voted out
+    clients[2].on("voting-complete", () => {
+      clients[2].emit("mr-white-guess", {
+        code,
+        username: "C",
+        guess: "wrongword",
+      });
+    });
+
+    clients[2].on("mr-white-guess-result", ({ correct }) => {
+      expect(correct).toBe(false);
+      guessResultReceived = true;
+      maybeDone();
+    });
+
+    clients[2].on("player-eliminated", ({ username, role }) => {
+      if (username === "C" && role === "mr.white") {
+        eliminatedReceived = true;
+        maybeDone();
+      }
+    });
+
+    function maybeDone() {
+      if (guessResultReceived && eliminatedReceived) {
+        done();
+      }
+    }
+
+    // All join
+    clients.forEach((c, i) =>
+      c.emit("join-room", { code, username: rooms[code].players[i].username })
+    );
+
+    setTimeout(() => {
+      // Vote out Mr. White
+      clients[0].emit("cast-vote", { code, voter: "A", voteFor: "C" });
+      clients[1].emit("cast-vote", { code, voter: "B", voteFor: "C" });
+      clients[2].emit("cast-vote", { code, voter: "C", voteFor: "B" });
+      clients[3].emit("cast-vote", { code, voter: "D", voteFor: "C" });
+    }, 100);
+  });
+
 });
