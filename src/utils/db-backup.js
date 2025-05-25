@@ -76,10 +76,6 @@ async function restoreDatabase() {
  * @returns {Promise<void>}
  */
 async function checkAndRestoreDatabase() {
-  if (process.env.CI) {
-    console.log("CI detected. Skipping database restore...");
-    return;
-  }
   try {
     // Test database connection
     await sequelize.authenticate();
