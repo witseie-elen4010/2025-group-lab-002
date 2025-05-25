@@ -86,8 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'create-game',
-              details: `User ${username} joined game with code ${code}.`,
-              username: `${username}`,
+              details: `User ${user.username} joined game with code ${code}.`,
+              username: `${user.username}`,
               room: code, // or replace with a room if relevant
               ip_address: null // optionally capture on the backend if needed
             })

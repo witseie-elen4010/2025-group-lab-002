@@ -22,17 +22,21 @@ router.get('/logs', async (req, res) => {
 
   if (username) {
     const user = await User.findOne({ where: { username } });
+
     if (user) {
+      // Known user: filter by user_id only
       where.user_id = user.id;
     } else {
-      return res.json([]); // No user found = no logs
+      // Guest or unknown user: filter by username AND user_id = 0
+      where.user_id = 0;
+      where.username = username;
     }
   }
 
   const logs = await AdminLog.findAll({
-  where, 
-  order: [['timestamp', 'DESC']]
-});
+    where,
+    order: [['timestamp', 'DESC']]
+  });
 
   const result = logs.map(log => ({
     timestamp: log.timestamp,
@@ -41,7 +45,7 @@ router.get('/logs', async (req, res) => {
     room: log.room,
     ip_address: log.ip_address,
     user_id: log.user_id,
-    username: log.User?.username
+    username: log.username
   }));
 
   res.json(result);
@@ -51,19 +55,17 @@ router.get('/logs', async (req, res) => {
 router.post('/log', async (req, res) => {
   const { username, action, details, room } = req.body;
   const ip_address = req.ip;
-  let userID; 
+  let userID = null; 
   if (username !== undefined && username !== null && username.trim() !== '') {
-        user = await User.findOne({ where: { username } });
+        let user = await User.findOne({ where: { username } });
         if (user) {
             userID = user.id;
         } else {
-            return res.json([]); // No user found = no logs
+            userID = 0 ;
         }
     }
-
-
   try {
-    await logAdminAction({ user_id: userID, action, details, room, ip_address });
+    await logAdminAction({ user_id: userID, username, action, details, room, ip_address });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to log admin action' });
