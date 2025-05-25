@@ -180,8 +180,20 @@ function setupGameSocket(io) {
             }
 
             if (winner) {
-              io.to(code).emit("game-over", { winner });
-            } else {
+              // Find winning player usernames
+              let winningPlayers;
+              if (winner === "Civilians") {
+                  winningPlayers = rooms[code].players
+                      .filter((p) => p.playerRole === "civilian")
+                      .map((p) => p.username);
+              } else if (winner === "Impostors") {
+                  winningPlayers = rooms[code].players
+                      .filter((p) => p.playerRole === "undercover" || p.playerRole === "mr.white")
+                      .map((p) => p.username);
+              }
+          
+              io.to(code).emit("game-over", { winner, winningPlayers });
+            }else {
               // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
               if (rooms[code].currentPlayerIndex > eliminatedIdx) {
                 rooms[code].currentPlayerIndex -= 1;

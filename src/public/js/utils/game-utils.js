@@ -151,4 +151,18 @@ function startVoting(room) {
     const socket = io();
     socket.emit("startVoting", (room));
     console.log("Starting voting phase...");
-  }
+}
+
+export function disableGameInputs() {
+    // Disable clue input
+    const clueInput = document.getElementById("clue-input");
+    const clueInputContainer = document.getElementById("clue-input-container");
+    const submitClueBtn = document.getElementById("submit-clue-btn");
+    if (clueInput) clueInput.disabled = true;
+    if (submitClueBtn) submitClueBtn.disabled = true;
+    if (clueInputContainer) clueInputContainer.style.display = "none";
+
+    // Disable voting
+    const voteForm = document.getElementById("vote-form");
+    if (voteForm) voteForm.style.display = "none";
+}
