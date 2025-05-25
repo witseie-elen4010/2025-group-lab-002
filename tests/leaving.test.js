@@ -68,3 +68,79 @@ describe('Leave Lobby Functionality', () => {
     }, 100);
   });
 });
+
+describe('Leave and Reconnect Functionality', () => {
+  let io, httpServer, serverSocket, clientSocket;
+  const rooms = {};
+
+  beforeEach((done) => {
+    httpServer = createServer();
+    io = new Server(httpServer);
+
+    io.on('connection', (socket) => {
+      socket.on('join-room', ({ code, username }) => {
+        socket.join(code);
+        if (!rooms[code]) {
+          rooms[code] = { players: [] };
+        }
+        rooms[code].players.push({ username });
+      });
+
+      socket.on('leave-room', ({ code, username }) => {
+        rooms[code].players = rooms[code].players.filter(p => p.username !== username);
+        if (rooms[code].players.length === 0) {
+          delete rooms[code];
+        } else {
+          socket.to(code).emit('player-left', { room: rooms[code] });
+        }
+      });
+
+      socket.on('rejoin-room', ({ code, username }) => {
+        const existing = rooms[code]?.players.find(p => p.username === username);
+        if (!existing) {
+          rooms[code].players.push({ username });
+        }
+        socket.emit('player-reconnected', { username });
+      });
+
+      serverSocket = socket;
+    });
+
+    httpServer.listen(() => {
+      const url = `http://localhost:${httpServer.address().port}`;
+      clientSocket = new Client(url);
+      clientSocket.on('connect', done);
+    });
+  });
+
+  afterEach(() => {
+    io.close();
+    clientSocket.close();
+    httpServer.close();
+  });
+
+  it('should remove user on leave and allow reconnection', (done) => {
+    const roomCode = 'ROOM1';
+
+    clientSocket.emit('join-room', { code: roomCode, username: 'TestUser' });
+
+    setTimeout(() => {
+      expect(rooms[roomCode].players.length).toBe(1);
+
+      clientSocket.emit('leave-room', { code: roomCode, username: 'TestUser' });
+
+      setTimeout(() => {
+        expect(rooms[roomCode]).toBeUndefined();
+
+        clientSocket.emit('join-room', { code: roomCode, username: 'TestUser' });
+        clientSocket.emit('rejoin-room', { code: roomCode, username: 'TestUser' });
+
+        setTimeout(() => {
+          expect(rooms[roomCode]).toBeDefined();
+          expect(rooms[roomCode].players.find(p => p.username === 'TestUser')).toBeDefined();
+          done();
+        }, 100);
+      }, 100);
+    }, 100);
+  });
+});
