@@ -145,7 +145,7 @@ Work as a team to identify the undercover player or Mr. White before they outsma
    Once at least 3 players are present, the host can begin.
 
 3. **Clue Phase:**  
-   Each player gives a one-word clue describing their word.
+   Each player gives a clue (maximum 20 characters) describing their word.
 
 4. **Discussion Phase:**  
    Players have 30 seconds to discuss and debate who seems suspicious.
