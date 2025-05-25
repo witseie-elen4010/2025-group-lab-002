@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     socket.emit('join-room', { code: roomCode, username: currentUsername });
 
-
     socket.on('player-joined-lobby', ({ roomData }) => {
         room = roomData;
         players = room.players;
@@ -35,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         renderPlayerList();
         updateStartButtonVisibility();
     });
+
+    if (room.hasGameStarted) {
+        window.location.href = `/api/game/play?code=${roomCode}`;
+    }
 
     function renderPlayerList() {
         const playerListContainer = document.getElementById('player-list');

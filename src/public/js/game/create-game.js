@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const code = joinCodeInput.value.trim().toUpperCase();
     if (!code) return alert('Please enter a room code.');
 
+
     try {
       const res = await fetch('/api/game/join-room', {
         method: 'POST',
@@ -78,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await res.json();
+      console.log(`data: ${data}`);
       if (res.ok) {
-
         await fetch('/api/admin/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -100,7 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Connected to socket server with ID:', socket.id);
         });
 
-        window.location.href = `/api/game/lobby?code=${code}`;
+        if (data.message === 'Rejoined room') {
+          window.location.href = `/api/game/play?code=${code}`;
+        }else {
+          window.location.href = `/api/game/lobby?code=${code}`;
+        }
       } else if (res.status === 400) {
         alert(data.message || 'Game has already started')
       } else {

@@ -110,13 +110,27 @@ export function setUpSockets(){
     updateTurnDisplay(room);
   });
 
-  // Listen for new player joining
-  socket.on("player-joined", async ({ room, username }) => {
+socket.on("player-joined", async ({ room, username }) => {
     console.log(`username: ${username}`);
+
+    // Clear the outer disconnect timer (if active)
+    if (window.roomDisconnectTimeout) {
+        clearTimeout(window.roomDisconnectTimeout);
+        window.roomDisconnectTimeout = null;
+    }
+
+    // Clear the inner countdown loop (if active)
+    if (window.roomCountdownTimeout) {
+        clearTimeout(window.roomCountdownTimeout);
+        window.roomCountdownTimeout = null;
+    }
+
+    const overlay = document.getElementById('player-disconnected-overlay');
+    overlay.style.display = 'none';
 
     displayPlayers(room);
     updateTurnDisplay(room);
-  });
+});
 
   socket.on("player-left", ({ room }) => {
     displayPlayers(room);
@@ -487,30 +501,41 @@ export function setUpSockets(){
     }
   });
 
+  socket.on('rejoin-room', ({ room, username }) => {
+    displayPlayers(room);        
+    updateTurnDisplay(room);     
+    document.getElementById('player-disconnected-overlay').style.display = 'none';
+  });
+
   socket.on("player-disconnected", ({ username, endTime }) => {
-    setTimeout(() => {
-        document.getElementById('disconnected-player-name').textContent = username;
-        document.getElementById('player-disconnected-overlay').style.display = 'flex';
+    if (!window.roomDisconnectTimeout) {
+        // Start only if no active disconnect timer
+        window.roomDisconnectTimeout = setTimeout(() => {
+            const overlay = document.getElementById('player-disconnected-overlay');
+            document.getElementById('disconnected-player-name').textContent = username;
+            overlay.style.display = 'flex';
 
-        const timerElement = document.getElementById('disconnect-timer');
+            const timerElement = document.getElementById('disconnect-timer');
 
-        const updateCountdown = () => {
-            const now = Date.now();
-            const timeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+            const updateCountdown = () => {
+                const now = Date.now();
+                const timeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
 
-            if (timerElement) {
-                timerElement.textContent = `${timeLeft} seconds`;
-            }
+                if (timerElement) {
+                    timerElement.textContent = `${timeLeft} seconds`;
+                }
 
-            if (timeLeft <= 0) {
-                window.location.href = "/api/game/join";
-            } else {
-                setTimeout(updateCountdown, 500);
-            }
-        };
+                if (timeLeft <= 0) {
+                    window.location.href = "/api/game/join";
+                } else {
+                    // Track this timeout so it can be cleared if someone rejoins
+                    window.roomCountdownTimeout = setTimeout(updateCountdown, 500);
+                }
+            };
 
-        updateCountdown();
-    }, 5000);
+            updateCountdown();
+        }, 10000); // start showing after 10 seconds
+    }
 });
 
   socket.on("player-reconnected", ({ username }) => {

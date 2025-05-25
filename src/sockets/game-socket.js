@@ -8,7 +8,7 @@ function setupGameSocket(io) {
     socket.on("disconnect", () => {
       console.log(`${username} disconnected from room ${code}`);
   
-      const endTime = Date.now() + 35000; // 35 seconds from now
+      const endTime = Date.now() + 40000;
   
       io.to(code).emit('player-disconnected', {
           room: rooms[code],  
@@ -54,6 +54,7 @@ function setupGameSocket(io) {
     socket.on("submitClue", ({ roomCode, username, clue }) => {
       const room = rooms[roomCode]; // however you're storing room state
       room.clues.push({ username, clue });
+      room.roundClues.push({ username, clue });
       io.to(roomCode).emit("clueSubmitted", { serverRoom: room });
       // Advance turn
       room.currentPlayerIndex =
@@ -195,6 +196,8 @@ function setupGameSocket(io) {
               rooms[code].roundNumber += 1;
               rooms[code].currentPlayerIndex = 0;
 
+              rooms[code].roundClues = [];
+
               // Emit new round event to all clients
               io.to(code).emit("new-round", {
                 roundNumber: rooms[code].roundNumber,
@@ -284,11 +287,7 @@ function setupGameSocket(io) {
 
     socket.on("leave-room", ({ code, username }) => {
       socket.leave(code);
-      // Remove player from room's player list
-      rooms[code].players = rooms[code].players.filter(
-        (p) => p.username !== username
-      );
-
+      
       // If no players left, delete the room
       if (rooms[code].players.length === 0) {
         delete rooms[code];
@@ -298,6 +297,7 @@ function setupGameSocket(io) {
 
       console.log(`${username} left room ${code}`);
     });
+
   });
 }
 

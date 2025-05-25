@@ -373,6 +373,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (roundDisplay) {
       roundDisplay.textContent = `Round ${roundNumber}`;
     }
+
+    room.roundClues = [];
     // Re-render player list and turn indicator using server state
     displayPlayers(room);
     updateTurnDisplay(room);
