@@ -14,6 +14,7 @@ test("Game room can be created and game can start when 3 players are in the lobb
   await page.getByRole("button", { name: "🎭 Play as Guest" }).click();
   const usernameElement = page.locator("#username");
   await expect(usernameElement).toBeVisible();
+  await expect(usernameElement).not.toHaveText("User");
   const host = await usernameElement.innerText();
   console.log(`Username: ${host}`);
   await page.getByRole("button", { name: "🎲 Create Room" }).click();
@@ -45,6 +46,7 @@ test("Game room can be created and game can start when 3 players are in the lobb
   await page1.getByRole("button", { name: "🎭 Play as Guest" }).click();
   const usernameElement1 = page1.locator("#username");
   await expect(usernameElement1).toBeVisible();
+  await expect(usernameElement1).not.toHaveText("User");
   const user1 = await usernameElement1.innerText();
   console.log(`Username: ${user1}`);
   await page1.getByRole("button", { name: "🔑 Join Room" }).click();
@@ -71,6 +73,7 @@ test("Game room can be created and game can start when 3 players are in the lobb
   await page2.getByRole("button", { name: "🎭 Play as Guest" }).click();
   const usernameElement2 = page2.locator("#username");
   await expect(usernameElement2).toBeVisible();
+  await expect(usernameElement2).not.toHaveText("User");
   const user2 = await usernameElement2.innerText();
   console.log(`Username: ${user2}`);
   await page2.getByRole("button", { name: "🔑 Join Room" }).click();
