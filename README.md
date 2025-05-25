@@ -1,5 +1,7 @@
 # Suspect 404
 
+[![Coverage Status](https://coveralls.io/repos/github/anoorbhai/2025-group-lab-002/badge.svg)](https://coveralls.io/github/anoorbhai/2025-group-lab-002)
+
 A real-time web-based deception and deduction game inspired by "Undercover" and "Spyfall". Players receive hidden roles and attempt to uncover the imposter through clues and social deduction.
 
 ## 👥 Contributors
@@ -139,3 +141,5 @@ Suspect 404 is a multiplayer party game of deception, deduction, and social stra
 
 ### 🔧 Admin Features
 - Admins can view logs, player activity, and manage rooms.
+
+
