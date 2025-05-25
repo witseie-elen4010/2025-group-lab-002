@@ -1,5 +1,4 @@
 document.getElementById('guest-button').addEventListener('click', async () => {
-  console.log("HERE");
   try {
     const response = await fetch('/api/users/guest-name', {
       method: 'POST',

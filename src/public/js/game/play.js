@@ -2,14 +2,6 @@ import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussion
 import { setUpSockets } from "../utils/socket-handler.js";
 
 
-class Player {
-    constructor(username, role) {
-      this.username = username;
-      this.role = role;
-    }
-}
-  
-
 document.addEventListener('DOMContentLoaded', async () => {
   // Get the room code from URL query parameters
   const urlParams = new URLSearchParams(window.location.search);

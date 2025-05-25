@@ -7,15 +7,19 @@ function setupGameSocket(io) {
 
     socket.on("disconnect", () => {
       console.log(`${username} disconnected from room ${code}`);
-  
+
       const endTime = Date.now() + 40000;
-  
-      io.to(code).emit('player-disconnected', {
-          room: rooms[code],  
+
+      const playerExists = rooms[code]?.players?.some(player => player.username === username);
+
+      if (playerExists) {
+        io.to(code).emit('player-disconnected', {
+          room: rooms[code],
           username: username,
           endTime
-      });
-  });
+        });
+      }
+    });
   
     socket.on("reconnect", () => {
       console.log(`Client reconnected`);
@@ -176,8 +180,20 @@ function setupGameSocket(io) {
             }
 
             if (winner) {
-              io.to(code).emit("game-over", { winner });
-            } else {
+              // Find winning player usernames
+              let winningPlayers;
+              if (winner === "Civilians") {
+                  winningPlayers = rooms[code].players
+                      .filter((p) => p.playerRole === "civilian")
+                      .map((p) => p.username);
+              } else if (winner === "Impostors") {
+                  winningPlayers = rooms[code].players
+                      .filter((p) => p.playerRole === "undercover" || p.playerRole === "mr.white")
+                      .map((p) => p.username);
+              }
+          
+              io.to(code).emit("game-over", { winner, winningPlayers });
+            }else {
               // Update currentPlayerIndex: if eliminated player was before or at the current index, decrement index
               if (rooms[code].currentPlayerIndex > eliminatedIdx) {
                 rooms[code].currentPlayerIndex -= 1;
@@ -287,7 +303,12 @@ function setupGameSocket(io) {
 
     socket.on("leave-room", ({ code, username }) => {
       socket.leave(code);
-      
+       // Remove the player from the room's players array
+      if (rooms[code] && rooms[code].players) {
+        rooms[code].players = rooms[code].players.filter(
+          player => player.username !== username
+        );
+      }
       // If no players left, delete the room
       if (rooms[code].players.length === 0) {
         delete rooms[code];
