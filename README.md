@@ -117,7 +117,7 @@ Suspect 404 is a multiplayer party game of deception, deduction, and social stra
   - Undercover/Mr. White is eliminated (**Civilians win**), or
   - Only Undercover/Mr. White remains (**Imposters win**).
 
-### 🔧 Admin Features
+### 🔧 6. Admin Features
 - Admin login gives access to:
 	-	View detailed game logs.
 	-	Filter logs by room code, username, or date.
@@ -126,5 +126,40 @@ Suspect 404 is a multiplayer party game of deception, deduction, and social stra
 - Admin login credentials:
 Username: admin
 Password: admin
+
+## 📜 Game Rules & How to Play
+
+**Objective:**  
+Work as a team to identify the undercover player or Mr. White before they outsmart the group.
+
+### Roles
+- **Civilian:** Knows the secret word; must avoid being too obvious.
+- **Undercover:** Has a similar but slightly altered word; tries to blend in without revealing the difference.
+- **Mr. White:** Has no word at all; must improvise and avoid detection.
+
+### How to Play
+1. **Create or Join a Room:**  
+   Players use the room code to join the lobby.
+
+2. **Start the Game:**  
+   Once at least 3 players are present, the host can begin.
+
+3. **Clue Phase:**  
+   Each player gives a one-word clue describing their word.
+
+4. **Discussion Phase:**  
+   Players have 30 seconds to discuss and debate who seems suspicious.
+
+5. **Voting Phase:**  
+   Players vote to eliminate someone.  
+   - If it’s a tie, a revote is triggered.  
+   - If Mr. White is eliminated, they get one shot to guess the civilian word.
+
+6. **Winning:**  
+   - Civilians win if they eliminate all imposters.  
+   - Undercover or Mr. White win if they outlast the civilians (or if Mr. White correctly guesses the word after elimination).
+
+7. **Reconnection:**  
+   If a player disconnects, they can reconnect to the game without losing their role or progress.
 
 
