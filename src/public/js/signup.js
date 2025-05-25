@@ -8,6 +8,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById('username').value;
     const email    = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Password validation
+    const passwordValid =
+      password.length >= 8 &&
+      /[!@#$%^&*(),.?":{}|<>]/.test(password) &&
+      /[0-9]/.test(password);
+
+    if (!passwordValid) {
+      signupError.style.display = 'block';
+      signupError.textContent =
+        'Password must be at least 8 characters and contain at least one special character and one number.';
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+      return;
+    }
+
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      signupError.style.display = 'block';
+      signupError.textContent = 'Passwords do not match. Please re-enter your password.';
+      document.getElementById('password').value = '';
+      document.getElementById('confirm-password').value = '';
+      document.getElementById('password').focus();
+      return;
+    }
 
     try {
       // First, attempt to sign up
