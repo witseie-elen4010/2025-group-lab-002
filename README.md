@@ -18,9 +18,10 @@ A real-time web-based deception and deduction game inspired by "Undercover" and 
 - Interactive clue and voting rounds
 - In-game chat with history and discussion timer
 - Admin panel for user and log management
-- Player can leave the lobby; room updates for remaining players
+- Player can leave the lobby or game; room updates for remaining players
 - Unit & integration tests with Jest and Supertest
 - Code coverage tracked with Coveralls
+- Guests get a randomly generated quirky username
 
 ---
 
