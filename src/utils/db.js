@@ -109,6 +109,10 @@ const AdminLog = sequelize.define('AdminLog', {
   room: {
     type: DataTypes.STRING,
     allowNull: true
+  }, 
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false
   }
 }, {
   timestamps: false,
