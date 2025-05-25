@@ -291,7 +291,12 @@ function setupGameSocket(io) {
 
     socket.on("leave-room", ({ code, username }) => {
       socket.leave(code);
-      
+       // Remove the player from the room's players array
+      if (rooms[code] && rooms[code].players) {
+        rooms[code].players = rooms[code].players.filter(
+          player => player.username !== username
+        );
+      }
       // If no players left, delete the room
       if (rooms[code].players.length === 0) {
         delete rooms[code];

@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Connected to socket server with ID:', socket.id);
         });
 
-        if (data.message === 'Rejoined room') {
+        if (data.message === 'Rejoined room' && data.room.hasGameStarted) {
           window.location.href = `/api/game/play?code=${code}`;
         }else {
           window.location.href = `/api/game/lobby?code=${code}`;
