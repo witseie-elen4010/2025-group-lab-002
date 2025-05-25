@@ -79,26 +79,42 @@ import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussion
 
 export function setUpSockets(socket){
   let votingRound = null;
+  let gameOver = false;
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
+
+  function disableGameInputs() {
+    // Disable clue input
+    const clueInput = document.getElementById("clue-input");
+    const clueInputContainer = document.getElementById("clue-input-container");
+    const submitClueBtn = document.getElementById("submit-clue-btn");
+    if (clueInput) clueInput.disabled = true;
+    if (submitClueBtn) submitClueBtn.disabled = true;
+    if (clueInputContainer) clueInputContainer.style.display = "none";
+
+    // Disable voting
+    const voteForm = document.getElementById("vote-form");
+    if (voteForm) voteForm.style.display = "none";
+  }
+
   // Listen for current turn updates from server
   socket.on("update-turn", (room) => {
     console.log("Received update-turn event:", room);
     updateTurnDisplay(room);
   });
 
-    // Listen for new player joining
-    socket.on("player-joined", async ({ room, username }) => {
-      console.log(`username: ${username}`);
-  
-      displayPlayers(room);
-      updateTurnDisplay(room);
-    });
+  // Listen for new player joining
+  socket.on("player-joined", async ({ room, username }) => {
+    console.log(`username: ${username}`);
 
-    socket.on('player-left', ({ room }) => {
-      displayPlayers(room);
-      updateTurnDisplay(room);
-    });
+    displayPlayers(room);
+    updateTurnDisplay(room);
+  });
+
+  socket.on("player-left", ({ room }) => {
+    displayPlayers(room);
+    updateTurnDisplay(room);
+  });
 
   // Listen for clue submissions
   socket.on("clueSubmitted", (data) => {
@@ -127,6 +143,7 @@ export function setUpSockets(socket){
 
   // Listen for startVoting event from server
   socket.on("startVoting", (room) => {
+    if (gameOver) return;
     // Hide clue input
     const clueInputContainer = document.getElementById("clue-input-container");
     clueInputContainer.style.display = "none";
@@ -134,7 +151,7 @@ export function setUpSockets(socket){
 
     // Create a new VotingRound instance with the current players
     votingRound = new VotingRound(players);
-    
+
     // Get current user info from localStorage
     const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
       username: "Guest",
@@ -229,6 +246,87 @@ export function setUpSockets(socket){
     console.log("Vote Results:", votingRound.votes);
     console.log("Eliminated:", eliminated);
 
+    // Check if eliminated is Mr. White
+    if (eliminated && eliminated.playerRole === "mr.white") {
+      // Only show modal to Mr. White
+      const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
+        username: "Guest",
+      };
+      if (user.username === eliminated.username) {
+        // Show modal to guess civilian word
+        let modal = document.createElement("div");
+        modal.id = "mr-white-guess-modal";
+        modal.style.position = "fixed";
+        modal.style.top = "0";
+        modal.style.left = "0";
+        modal.style.width = "100%";
+        modal.style.height = "100%";
+        modal.style.backgroundColor = "rgba(0,0,0,0.7)";
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+        modal.style.zIndex = "3000";
+
+        const modalContent = document.createElement("div");
+        modalContent.style.backgroundColor = "white";
+        modalContent.style.padding = "30px";
+        modalContent.style.borderRadius = "12px";
+        modalContent.style.maxWidth = "90%";
+        modalContent.style.minWidth = "300px";
+        modalContent.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
+
+        modalContent.innerHTML = `
+          <h3>You've been eliminated!</h3>
+          <p>As Mr. White, you have one chance to guess the civilian word. If you guess correctly, you win!</p>
+          <form id="mr-white-guess-form">
+            <input type="text" id="mr-white-guess-input" class="form-control mb-2" placeholder="Enter your guess..." required />
+            <button type="submit" class="btn btn-primary w-100">Submit Guess</button>
+          </form>
+          <button class="btn btn-secondary mt-3" id="close-mr-white-modal">Close</button>
+        `;
+
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Handle guess submission
+        document.getElementById("mr-white-guess-form").onsubmit = function (e) {
+          e.preventDefault();
+          const guess = document
+            .getElementById("mr-white-guess-input")
+            .value.trim();
+          // Send guess to server for validation
+          socket.emit("mr-white-guess", {
+            code,
+            username: user.username,
+            guess,
+          });
+          // Disable form to prevent multiple submissions
+          document.getElementById("mr-white-guess-input").disabled = true;
+          this.querySelector("button[type='submit']").disabled = true;
+        };
+
+        document.getElementById("close-mr-white-modal").onclick = function () {
+          document.body.removeChild(modal);
+        };
+
+        // Listen for result from server
+        socket.once("mr-white-guess-result", ({ correct, civilianWord }) => {
+          const resultMsg = correct
+            ? `<span style="color:green;font-weight:bold;">Correct! You win as Mr. White!</span>`
+            : `<span style="color:red;font-weight:bold;">Incorrect. The civilian word was: <strong>${civilianWord}</strong>. You are eliminated.</span>`;
+          modalContent.innerHTML = `
+            <h3>Mr. White's Guess</h3>
+            <p>${resultMsg}</p>
+            <button class="btn btn-secondary mt-3" id="close-mr-white-modal">Close</button>
+          `;
+          document.getElementById("close-mr-white-modal").onclick =
+            function () {
+              document.body.removeChild(modal);
+            };
+        });
+      }
+    }
+
     // Build the results HTML
     let breakdown = "<strong>Vote Results:</strong><br>";
     for (const [username, count] of Object.entries(votingRound.votes)) {
@@ -316,6 +414,7 @@ export function setUpSockets(socket){
 
   // Listen for new round event from server
   socket.on("new-round", ({ roundNumber, room }) => {
+    if (gameOver) return;
     // Update round number display
     const roundDisplay = document.getElementById("round-number-display");
     if (roundDisplay) {
@@ -337,61 +436,111 @@ export function setUpSockets(socket){
       playerDiv.classList.remove("eliminated-player");
       playerDiv.style.opacity = "1";
     });
-
-  
   });
 
+  // Listen for player-eliminated event from server
+  socket.on("player-eliminated", ({ username, role }) => {
 
-  socket.on("game-over", ({ winner }) => {
-    let modal = document.getElementById("voting-results-modal");
-    let modalContent = document.getElementById("voting-results-modal-content");
+    
+    const user = JSON.parse(sessionStorage.getItem("loggedInUser")) || {
+      username: "Guest",
+    };
+    if (user.username === username) {
+      // Show eliminated message
+      let eliminatedModal = document.createElement("div");
+      eliminatedModal.id = "eliminated-modal";
+      eliminatedModal.style.position = "fixed";
+      eliminatedModal.style.top = "0";
+      eliminatedModal.style.left = "0";
+      eliminatedModal.style.width = "100%";
+      eliminatedModal.style.height = "100%";
+      eliminatedModal.style.backgroundColor = "rgba(0,0,0,0.7)";
+      eliminatedModal.style.display = "flex";
+      eliminatedModal.style.justifyContent = "center";
+      eliminatedModal.style.alignItems = "center";
+      eliminatedModal.style.zIndex = "4000";
 
-    modal.style.display = "flex";
-
-    // Option 2: (Alternative) Automatically show game result after a delay
-    setTimeout(() => {
+      const modalContent = document.createElement("div");
+      modalContent.style.backgroundColor = "white";
+      modalContent.style.padding = "30px";
+      modalContent.style.borderRadius = "12px";
+      modalContent.style.maxWidth = "90%";
+      modalContent.style.minWidth = "300px";
+      modalContent.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
       modalContent.innerHTML = `
-        <h2>Game Over</h2>
-        <p class="fs-4"><strong>${winner}</strong> win the game!</p>
-        <button class="btn btn-primary mt-3" id="return-to-lobby">Return To Lobby</button>
-        <button class="btn btn-primary mt-3" id="close-game-over-btn">Close</button>
-      `;
-      document.getElementById("close-game-over-btn").onclick = () => {
-        document.body.removeChild(modal);
-      };
+      <h2>You have been eliminated</h2>
+      <p class="fs-5">You are out of the game. Returning to join screen...</p>
+    `;
+      eliminatedModal.appendChild(modalContent);
+      document.body.appendChild(eliminatedModal);
 
-      document.getElementById("return-to-lobby").onclick = () => {
-        window.location.href = `/api/game/lobby?code=${code}`;
-      };
-
-    }, 4000);
-
+      setTimeout(() => {
+        window.location.href = `/api/game/join`;
+      }, 5000);
+    }
   });
 
-
   socket.on("game-over", ({ winner }) => {
-    let modal = document.getElementById("voting-results-modal");
-    let modalContent = document.getElementById("voting-results-modal-content");
+    gameOver = true;
+    disableGameInputs();
 
-    modal.style.display = "flex";
+    let gameOverModal = document.getElementById("game-over-modal");
+    if (!gameOverModal) {
+      gameOverModal = document.createElement("div");
+      gameOverModal.id = "game-over-modal";
+      gameOverModal.style.position = "fixed";
+      gameOverModal.style.top = "0";
+      gameOverModal.style.left = "0";
+      gameOverModal.style.width = "100%";
+      gameOverModal.style.height = "100%";
+      gameOverModal.style.backgroundColor = "rgba(0,0,0,0.7)";
+      gameOverModal.style.display = "flex";
+      gameOverModal.style.justifyContent = "center";
+      gameOverModal.style.alignItems = "center";
+      gameOverModal.style.zIndex = "3000";
 
-    // Option 2: (Alternative) Automatically show game result after a delay
+      // Modal content
+      const modalContent = document.createElement("div");
+      modalContent.id = "game-over-modal-content";
+      modalContent.style.backgroundColor = "white";
+      modalContent.style.padding = "30px";
+      modalContent.style.borderRadius = "12px";
+      modalContent.style.maxWidth = "90%";
+      modalContent.style.minWidth = "300px";
+      modalContent.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
+      gameOverModal.appendChild(modalContent);
+      document.body.appendChild(gameOverModal);
+    } else {
+      gameOverModal.style.display = "flex";
+    }
+
+    // Fill modal content
+    const modalContent =
+      document.getElementById("game-over-modal-content") ||
+      gameOverModal.firstChild;
+    modalContent.innerHTML = `
+      <h2>Game Over</h2>
+      <p class="fs-4"><strong>${winner}</strong> win the game!</p>
+      <button class="btn btn-primary mt-3" id="leave-game">Leave Game</button>
+    `;
+
+    // Click outside modal returns to lobby
+    gameOverModal.onclick = () => {
+      window.location.href = `../game/join`;
+    };
+
+    document.getElementById("close-game-over-btn").onclick = (e) => {
+      e.stopPropagation();
+      document.body.removeChild(gameOverModal);
+    };
+
+    document.getElementById("leave-game").onclick = (e) => {
+      e.stopPropagation();
+      window.location.href = `../game/join`;
+    };
+
     setTimeout(() => {
-      modalContent.innerHTML = `
-        <h2>Game Over</h2>
-        <p class="fs-4"><strong>${winner}</strong> win the game!</p>
-        <button class="btn btn-primary mt-3" id="return-to-lobby">Return To Lobby</button>
-        <button class="btn btn-primary mt-3" id="close-game-over-btn">Close</button>
-      `;
-      document.getElementById("close-game-over-btn").onclick = () => {
-        document.body.removeChild(modal);
-      };
-
-      document.getElementById("return-to-lobby").onclick = () => {
-        window.location.href = `/api/game/lobby?code=${code}`;
-      };
-
-    }, 4000);
-
+      window.location.href = `../game/join`;
+    }, 5000);
   });
 }
