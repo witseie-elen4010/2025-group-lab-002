@@ -84,12 +84,8 @@
     document.getElementById('signup-button').addEventListener('click', () => {
       window.location.href = './sign-up';
     });
-
-    document.getElementById('guest-button').addEventListener('click', () => {
-      sessionStorage.setItem('loggedInUser', JSON.stringify({ username: 'Guest' }));
-      window.location.href = '../game/join';
-    });
   </script>
+  <script src="/js/landing.js"></script>
 
 </body>
 </html>

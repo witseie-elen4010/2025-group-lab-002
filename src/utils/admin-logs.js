@@ -9,10 +9,11 @@ const { AdminLog } = require('./db');
  * @param {string} [params.room] - Optional room code
  * @param {string} [params.ip_address] - Optional IP address
  */
-async function logAdminAction({ user_id, action, details, room, ip_address }) {
+async function logAdminAction({ user_id, username, action, details, room, ip_address }) {
   try {
     await AdminLog.create({
       user_id,
+      username,
       action,
       details,
       room,

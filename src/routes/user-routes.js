@@ -3,6 +3,8 @@ const router = express.Router()
 const { User, sequelize, findUserById, findUserByUsername, findUserByEmail } = require('../utils/db')
 const path = require('path');
 const bcrypt = require('bcrypt')
+const { generateGuestName, reserveGuestName, existingGuestNames } = require('../utils/guest-name-creator.js');
+ 
 
 // Get all users route
 router.get('/', async (req, res) => {
@@ -117,6 +119,24 @@ router.get('/landing', async (req, res) => {
 router.get('/login', async (req, res) => {
   res.sendFile(path.join(__dirname, '../public/login.html'))
 })
+
+
+router.post('/guest-name', (req, res) => {
+  let attempt = 0;
+  let name;
+
+  do {
+    name = generateGuestName({ separator: '-' });
+    attempt++;
+  } while (existingGuestNames.has(name) && attempt < 5);
+
+  if (existingGuestNames.has(name)) {
+    return res.status(500).json({ error: 'Could not generate unique guest name.' });
+  }
+
+  reserveGuestName(name); // Add name with auto-expiry (e.g., 30 mins)
+  res.status(200).json({ name });
+});
 
 // Get user by ID
 router.get('/user/:id', async (req, res) => {
