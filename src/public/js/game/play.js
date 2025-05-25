@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleWordBtn.textContent = wordVisible ? "Hide Word" : "Show Word";
   };
 
-  const socket = io();
-  setUpSockets(socket);
+
+  const socket = setUpSockets();
   // Initialize Socket.io connection
 
   // Display room code

@@ -2,7 +2,27 @@ const { rooms } = require("../routes/game-routes");
 
 function setupGameSocket(io) {
   io.on("connection", (socket) => {
-    console.log("Client connected");
+    const code = socket.handshake.query.code;
+    const username = socket.handshake.query.username;
+
+    socket.on("disconnect", () => {
+      console.log(`${username} disconnected from room ${code}`);
+  
+      const endTime = Date.now() + 35000; // 35 seconds from now
+  
+      io.to(code).emit('player-disconnected', {
+          room: rooms[code],  
+          username: username,
+          endTime
+      });
+  });
+  
+    socket.on("reconnect", () => {
+      console.log(`Client reconnected`);
+      io.to(code).emit("player-reconnected", { username: socket.username });
+    });
+
+    console.log(`Client connected: ${username} in room ${code}`);
 
     socket.on("join-room", ({ code, username }) => {
       socket.join(code);
@@ -260,11 +280,6 @@ function setupGameSocket(io) {
           });
         }
       }
-    });
-
-
-    socket.on("disconnect", () => {
-      console.log("Client disconnected");
     });
 
     socket.on("leave-room", ({ code, username }) => {

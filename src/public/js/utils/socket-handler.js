@@ -77,11 +77,18 @@ import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussion
     }
 }
 
-export function setUpSockets(socket){
+export function setUpSockets(){
   let votingRound = null;
   let gameOver = false;
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
+  const username = JSON.parse(sessionStorage.getItem("loggedInUser")).username;
+  const socket = io({
+    query: {
+      code,
+      username,
+    },
+  });
 
   function disableGameInputs() {
     // Disable clue input
@@ -480,6 +487,37 @@ export function setUpSockets(socket){
     }
   });
 
+  socket.on("player-disconnected", ({ username, endTime }) => {
+    setTimeout(() => {
+        document.getElementById('disconnected-player-name').textContent = username;
+        document.getElementById('player-disconnected-overlay').style.display = 'flex';
+
+        const timerElement = document.getElementById('disconnect-timer');
+
+        const updateCountdown = () => {
+            const now = Date.now();
+            const timeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+
+            if (timerElement) {
+                timerElement.textContent = `${timeLeft} seconds`;
+            }
+
+            if (timeLeft <= 0) {
+                window.location.href = "/api/game/join";
+            } else {
+                setTimeout(updateCountdown, 500);
+            }
+        };
+
+        updateCountdown();
+    }, 5000);
+});
+
+  socket.on("player-reconnected", ({ username }) => {
+    console.log(`${username} reconnected.`);
+    document.getElementById('player-disconnected-overlay').style.display = 'none';
+  });
+
   socket.on("game-over", ({ winner }) => {
     gameOver = true;
     disableGameInputs();
@@ -543,4 +581,6 @@ export function setUpSockets(socket){
       window.location.href = `../game/join`;
     }, 5000);
   });
+
+  return socket;
 }
