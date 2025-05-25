@@ -1,6 +1,6 @@
 # Suspect 404
 
-[![Coverage Status](https://coveralls.io/repos/github/anoorbhai/2025-group-lab-002/badge.svg)](https://coveralls.io/github/anoorbhai/2025-group-lab-002)
+[![Coverage Status](https://coveralls.io/repos/github/witseie-elen4010/2025-group-lab-002/badge.svg)](https://coveralls.io/github/witseie-elen4010/2025-group-lab-002)
 
 A real-time web-based deception and deduction game inspired by "Undercover" and "Spyfall". Players receive hidden roles and attempt to uncover the imposter through clues and social deduction.
 
