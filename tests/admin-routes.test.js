@@ -39,7 +39,7 @@ describe('admin-routes', () => {
       expect(response.body).toEqual({ success: true });
     });
 
-    it('should return empty array if username not found', async () => {
+    it('should return success true even if username not found', async () => {
       User.findOne.mockResolvedValue(null);
 
       const response = await request(app).post('/admin/log').send({
@@ -47,7 +47,7 @@ describe('admin-routes', () => {
         action: 'fail'
       });
 
-      expect(response.body).toEqual([]);
+      expect(response.body).toEqual({ success: true });
     });
 
     it('should return 500 on logging failure', async () => {
@@ -68,7 +68,7 @@ describe('admin-routes', () => {
     it('should return filtered logs by username', async () => {
       User.findOne.mockResolvedValue({ id: 42 });
       AdminLog.findAll.mockResolvedValue([
-        { timestamp: new Date(), action: 'test', User: { username: 'admin' } }
+        { timestamp: new Date(), action: 'test', username: 'admin' }
       ]);
 
       const response = await request(app).get('/admin/logs').query({ username: 'admin' });
@@ -78,8 +78,9 @@ describe('admin-routes', () => {
       expect(response.body[0]).toHaveProperty('action', 'test');
     });
 
-    it('should return empty array if user not found', async () => {
+    it('should return success true and empty list if user not found', async () => {
       User.findOne.mockResolvedValue(null);
+      AdminLog.findAll.mockResolvedValue([]);
 
       const response = await request(app).get('/admin/logs').query({ username: 'ghost' });
 
