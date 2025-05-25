@@ -21,6 +21,7 @@ A real-time web-based deception and deduction game inspired by "Undercover" and 
 - In-game chat with history and discussion timer
 - Admin panel for user and log management
 - Player can leave the lobby or game; room updates for remaining players
+- Player reconnection support if disconnected
 - Unit & integration tests with Jest and Supertest
 - Code coverage tracked with Coveralls
 - Guests get a randomly generated quirky username
@@ -57,30 +58,7 @@ npm start
 npm test
 ```
 
-### 4. Project Structure
-
-Suspect404/
-├── .github/
-├── backups/
-├── coverage/
-├── documentation/
-├── node_modules/
-├── src/
-│   ├── config/
-│   ├── public/
-│   ├── routes/
-│   ├── sockets/
-│   └── utils/
-├── tests/
-├── .env
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── README.md
-├── server.js
-└── database-backup.sql
-
-### 5. Folder Descriptions
+### 4. Folder Descriptions
 -	.github/
 Contains GitHub-related configurations like workflows or issue templates.
 -	backups/
@@ -140,6 +118,13 @@ Suspect 404 is a multiplayer party game of deception, deduction, and social stra
   - Only Undercover/Mr. White remains (**Imposters win**).
 
 ### 🔧 Admin Features
-- Admins can view logs, player activity, and manage rooms.
+- Admin login gives access to:
+	-	View detailed game logs.
+	-	Filter logs by room code, username, or date.
+	-	Monitor player actions and game flow 
+
+- Admin login credentials:
+Username: admin
+Password: admin
 
 

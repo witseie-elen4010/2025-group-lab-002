@@ -125,7 +125,7 @@ export function startDiscussionTime(room) {
         timerDisplay.style.zIndex = '1001';
         document.body.appendChild(timerDisplay);
     
-        let timeRemaining = 5; // 60 seconds
+        let timeRemaining = 30; // 30 seconds
     
         const updateTimer = () => {
             const minutes = Math.floor(timeRemaining / 60);
