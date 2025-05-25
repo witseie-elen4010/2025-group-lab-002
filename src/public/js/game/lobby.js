@@ -18,10 +18,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     const user = JSON.parse(sessionStorage.getItem('loggedInUser')) || { username: 'Guest' };
     currentUsername = user.username;
 
-    const socket = io();
+    const socket = io({
+        query: {
+          code: roomCode,
+          username: currentUsername,
+        },
+      });
 
     socket.emit('join-room', { code: roomCode, username: currentUsername });
-
 
     socket.on('player-joined-lobby', ({ roomData }) => {
         room = roomData;
@@ -30,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         renderPlayerList();
         updateStartButtonVisibility();
     });
+
+    if (room.hasGameStarted) {
+        window.location.href = `/api/game/play?code=${roomCode}`;
+    }
 
     function renderPlayerList() {
         const playerListContainer = document.getElementById('player-list');

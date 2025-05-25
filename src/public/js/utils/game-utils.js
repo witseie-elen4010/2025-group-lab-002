@@ -27,7 +27,15 @@ export function displayPlayers(room) {
 
       const speechBubble = document.createElement("div");
       speechBubble.className = "speech-bubble";
-      speechBubble.style.display = "none"; // Hide speech bubble by default
+      
+      // Find player's clue in roundClues if it exists
+      const playerClue = room.roundClues.find(clue => clue.username === player.username);
+      if (playerClue) {
+        speechBubble.textContent = playerClue.clue;
+        speechBubble.style.display = "block";
+      } else {
+        speechBubble.style.display = "none";
+      }
 
       playerDiv.appendChild(circle);
       playerDiv.appendChild(nameDiv);
@@ -144,5 +152,4 @@ function startVoting(room) {
     const socket = io();
     socket.emit("startVoting", (room));
     console.log("Starting voting phase...");
-    //CLEAR THE CLUES
   }

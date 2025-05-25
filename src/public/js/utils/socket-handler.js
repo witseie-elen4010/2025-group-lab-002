@@ -77,11 +77,18 @@ import { displayPlayers, createTurnIndicator, updateTurnDisplay, startDiscussion
     }
 }
 
-export function setUpSockets(socket){
+export function setUpSockets(){
   let votingRound = null;
   let gameOver = false;
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
+  const username = JSON.parse(sessionStorage.getItem("loggedInUser")).username;
+  const socket = io({
+    query: {
+      code,
+      username,
+    },
+  });
 
   function disableGameInputs() {
     // Disable clue input
@@ -103,13 +110,27 @@ export function setUpSockets(socket){
     updateTurnDisplay(room);
   });
 
-  // Listen for new player joining
-  socket.on("player-joined", async ({ room, username }) => {
+socket.on("player-joined", async ({ room, username }) => {
     console.log(`username: ${username}`);
+
+    // Clear the outer disconnect timer (if active)
+    if (window.roomDisconnectTimeout) {
+        clearTimeout(window.roomDisconnectTimeout);
+        window.roomDisconnectTimeout = null;
+    }
+
+    // Clear the inner countdown loop (if active)
+    if (window.roomCountdownTimeout) {
+        clearTimeout(window.roomCountdownTimeout);
+        window.roomCountdownTimeout = null;
+    }
+
+    const overlay = document.getElementById('player-disconnected-overlay');
+    overlay.style.display = 'none';
 
     displayPlayers(room);
     updateTurnDisplay(room);
-  });
+});
 
   socket.on("player-left", ({ room }) => {
     displayPlayers(room);
@@ -480,6 +501,48 @@ export function setUpSockets(socket){
     }
   });
 
+  socket.on('rejoin-room', ({ room, username }) => {
+    displayPlayers(room);        
+    updateTurnDisplay(room);     
+    document.getElementById('player-disconnected-overlay').style.display = 'none';
+  });
+
+  socket.on("player-disconnected", ({ username, endTime }) => {
+    if (!window.roomDisconnectTimeout) {
+        // Start only if no active disconnect timer
+        window.roomDisconnectTimeout = setTimeout(() => {
+            const overlay = document.getElementById('player-disconnected-overlay');
+            document.getElementById('disconnected-player-name').textContent = username;
+            overlay.style.display = 'flex';
+
+            const timerElement = document.getElementById('disconnect-timer');
+
+            const updateCountdown = () => {
+                const now = Date.now();
+                const timeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+
+                if (timerElement) {
+                    timerElement.textContent = `${timeLeft} seconds`;
+                }
+
+                if (timeLeft <= 0) {
+                    window.location.href = "/api/game/join";
+                } else {
+                    // Track this timeout so it can be cleared if someone rejoins
+                    window.roomCountdownTimeout = setTimeout(updateCountdown, 500);
+                }
+            };
+
+            updateCountdown();
+        }, 10000); // start showing after 10 seconds
+    }
+});
+
+  socket.on("player-reconnected", ({ username }) => {
+    console.log(`${username} reconnected.`);
+    document.getElementById('player-disconnected-overlay').style.display = 'none';
+  });
+
   socket.on("game-over", ({ winner }) => {
     gameOver = true;
     disableGameInputs();
@@ -543,4 +606,6 @@ export function setUpSockets(socket){
       window.location.href = `../game/join`;
     }, 5000);
   });
+
+  return socket;
 }
