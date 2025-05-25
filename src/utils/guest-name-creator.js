@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
+const existingGuestNames = new Set();
+const usernameExpiry = new Map(); // name -> timeoutId
+
 // Load and cache the word lists once on module load
 const adjectives = fs.readFileSync(path.join(__dirname, '../../data/adjectives.txt'), 'utf8')
   .split('\n')
@@ -22,11 +25,6 @@ function generateGuestName({separator = '' } = {}) {
   return `${adjective}${separator}${noun}`;
 }
 
-
-const existingGuestNames = new Set();
-
-// Utility to expire guest usernames after a timeout (optional)
-const usernameExpiry = new Map(); // name -> timeoutId
 
 function reserveGuestName(name, expiryMs = 30 * 60 * 1000) {
   existingGuestNames.add(name);

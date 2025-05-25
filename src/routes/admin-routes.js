@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path')
 const router = express.Router();
 const { User, AdminLog } = require('../utils/db')
 const { Op } = require('sequelize');

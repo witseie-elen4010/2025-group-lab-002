@@ -7,15 +7,19 @@ function setupGameSocket(io) {
 
     socket.on("disconnect", () => {
       console.log(`${username} disconnected from room ${code}`);
-  
+
       const endTime = Date.now() + 40000;
-  
-      io.to(code).emit('player-disconnected', {
-          room: rooms[code],  
+
+      const playerExists = rooms[code]?.players?.some(player => player.username === username);
+
+      if (playerExists) {
+        io.to(code).emit('player-disconnected', {
+          room: rooms[code],
           username: username,
           endTime
-      });
-  });
+        });
+      }
+    });
   
     socket.on("reconnect", () => {
       console.log(`Client reconnected`);
