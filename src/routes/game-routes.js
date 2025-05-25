@@ -35,18 +35,18 @@ router.post('/create-room', async (req, res) => {
 router.post('/join-room', (req, res) => {
   const { code, username } = req.body;
 
+  if (!rooms[code]) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+
   const existingPlayer = rooms[code].players.find(player => player.username === username);
   if (existingPlayer) {
     return res.status(200).json({
       message: 'Rejoined room',
-      room: rooms[code],  // include the full room object here!
+      room: rooms[code],
       players: rooms[code].players,
       code: code
     });
-  }
-
-  if (!rooms[code]) {
-    return res.status(404).json({ message: 'Room not found' });
   }
 
   if (rooms[code].hasGameStarted) {
