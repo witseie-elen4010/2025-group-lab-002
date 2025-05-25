@@ -24,7 +24,6 @@ const player = {
 ## 4. JavaScript Practices
 - *Quotes:* Single quotes ⁠ ' ' ⁠ unless interpolation is needed (then backticks `` ` ``).
 - ⁠Use ⁠ const ⁠ and ⁠ let ⁠ only (no ⁠ var ⁠).
-- ⁠Prefer arrow functions unless necessary.
 - ⁠Use template literals for string interpolation.
 - ⁠Handle errors with ⁠ try-catch ⁠ blocks.
 
@@ -86,6 +85,3 @@ function startGameSession(hostId) { ... }
 - Avoid using **IDs** for styling (use classes).
 - Group related CSS classes together for readability.
 - Prefer existing Tailwind or Bootstrap utility classes when possible instead of writing custom CSS.
-- Custom colors should be avoided unless absolutely necessary; prefer using predefined Tailwind or Bootstrap color palettes for consistency and maintainability.
-- Apply universal styling wherever possible (e.g., using base styles in Tailwind like prose, text-base, bg-gray-100) to ensure a cohesive and uniform appearance across the application.
-- Pixel-based sizing must be avoided. Use only responsive units (rem, em, %, vh, vw, etc.) to ensure that the application scales properly across different device sizes.
