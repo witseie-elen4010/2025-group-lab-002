@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleWordBtn.textContent = wordVisible ? "Hide Word" : "Show Word";
   };
 
-  const socket = io();
-  setUpSockets(socket);
+
+  const socket = setUpSockets();
   // Initialize Socket.io connection
 
   // Display room code
@@ -373,6 +373,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (roundDisplay) {
       roundDisplay.textContent = `Round ${roundNumber}`;
     }
+
+    room.roundClues = [];
     // Re-render player list and turn indicator using server state
     displayPlayers(room);
     updateTurnDisplay(room);
